@@ -14,7 +14,7 @@
 5. Adjust the infra/app.ts file with:
    - The AWS accounts for production and development.
    - Domain name and subdomain name for the project. You can use '' as the subdomain name if you want the app to be accessible at the root domain.
-   - Certificate ARNs for the project. These certificates  must have a wildcard that spans the entire domain name plus the root domain (if you use '' as the subdomain name).
+   - Certificate ARNs for the project. These certificates must have a wildcard that spans the entire domain name plus the root domain (if you use '' as the subdomain name).
 6. Create secrets in Secrets Manager, with the names from the infra/app.ts file (see Secret Structure section below).
 7. Create new Sentry and Mixpanel projects. Plug in the DSN and tokens into the secrets.
 8. Create a new Postman workspace, update the link at the bottom of the README.md file and plug the workspace ID in the secrets.
@@ -37,6 +37,7 @@ The secrets in AWS Secrets Manager should follow this structure:
 ```
 
 **Secret Fields:**
+
 - **MIXPANEL_TOKEN**: Project token from your Mixpanel project settings (for analytics)
 - **SENTRY_DSN**: Data Source Name from your Sentry project settings (for error tracking)
 - **POSTMAN_API_KEY**: API key for Postman API access (used for automated API documentation)
@@ -49,11 +50,13 @@ The secrets in AWS Secrets Manager should follow this structure:
 ## Extra Features
 
 If you do not need Google login:
+
 - Remove the `signInWithGoogle` method from the aws-auth.util.ts file.
 - Remove the `handleGoogleSignIn` method from the sign-in.hook.ts file.
 - Remove the `googleProvider` from the backend.construct.ts file.
 
 If you do not need to call the TimeBack API:
+
 - Remove the `backend/app/common/integrations/timeback/` directory.
 - Remove the `timeBackBaseUrl` property from the `infra/app.ts` file (all 3 environment configurations).
 - Remove the `timeBackBaseUrl` property from the `BackendConstructProps` interface in the `backend.construct.ts` file.
@@ -62,6 +65,7 @@ If you do not need to call the TimeBack API:
 - Remove the `TimeBackEnvironmentSchema` from the `environment.util.ts` file and remove it from the merged `EnvironmentSchema`.
 
 If you do not need LTI login (Magic Links):
+
 - Remove the following files:
   - `backend/app/authentication/models/lti-launch.model.ts`
   - `backend/app/authentication/models/lti-launch.schema.ts`
@@ -83,9 +87,10 @@ Note that by default, Google login is disabled on ephemeral environments (becaus
 
 ### Cleanup
 
-Once you're done with the changes above, remove this section from the README. Commit and push to your new repository. This should automatically create your integration environment. 
+Once you're done with the changes above, remove this section from the README. Commit and push to your new repository. This should automatically create your integration environment.
 
 ## Project Structure
+
 ```
 wseng-monorepo-starter/
 ├── backend/          # TypeScript/Node.js API server
@@ -118,10 +123,10 @@ wseng-monorepo-starter/
 
 The platform requires access to one of two AWS accounts:
 
-| Environment | Account ID   | Account Name                           |
-| ----------- | ------------ | -------------------------------------- |
-| Production  | 856284715153 | RAM-AWS-Dev-WSEngineering-WSEng-Admin  |
-| Development | 856284715153 | RAM-AWS-Dev-WSEngineering-WSEng-Admin  |
+| Environment | Account ID   | Account Name                          |
+| ----------- | ------------ | ------------------------------------- |
+| Production  | 856284715153 | RAM-AWS-Dev-WSEngineering-WSEng-Admin |
+| Development | 856284715153 | RAM-AWS-Dev-WSEngineering-WSEng-Admin |
 
 During development, you should have the Development account selected in your AWS profile (you may configure it in the .env file with the `AWS_PROFILE` variable).
 
