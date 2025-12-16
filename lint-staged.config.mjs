@@ -1,3 +1,11 @@
+// Shared lint-staged configuration
+export const sharedConfig = {
+  '**/*.{json,md}': ['prettier --write'],
+};
+
 export default {
-  '**/*.{json,md,ts}': ['prettier --write'],
+  ...sharedConfig,
+  '*.ts': [
+    'prettier --write',
+  ],
 };
