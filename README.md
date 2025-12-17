@@ -18,6 +18,134 @@
 6. Create secrets in Secrets Manager, with the names from the infra/app.ts file (see Secret Structure section below).
 7. Create new Sentry and Mixpanel projects. Plug in the DSN and tokens into the secrets.
 8. Create a new Postman workspace, update the link at the bottom of the README.md file and plug the workspace ID in the secrets.
+9. Customize the visual identity (see Customizing Visual Identity section below).
+
+### Customizing Visual Identity
+
+The starter template includes a default design system that should be customized to match your project's brand identity.
+
+#### 1. Logo
+
+Replace the default logo with your own:
+
+- **Create your logo**: Design a new SVG logo at `frontend/public/images/logo.svg`
+  - Recommended size: 200x200 viewBox
+  - The default logo uses a geometric hexagon design - replace with your brand's logo
+  - Ensure the logo works well at small sizes (it's used at 48-64px in the UI)
+
+#### 2. Brand Colors
+
+Update the color palette in `frontend/tailwind.config.ts`:
+
+```typescript
+colors: {
+  brand: {
+    50: '#f0f9ff',   // Lightest shade
+    100: '#e0f2fe',
+    // ... update all shades 50-900
+    500: '#0ea5e9',  // Main brand color
+    DEFAULT: '#0ea5e9',
+  },
+  primary: { /* ... */ },
+  secondary: { /* ... */ },
+}
+```
+
+**Tips:**
+- Use a color palette generator (like [Tailwind Color Generator](https://uicolors.app/create)) to create consistent shades from your main brand color
+- The `brand` color is used for primary buttons, links, and accents
+- The `primary` color is used for secondary UI elements
+- The `secondary` color is used for neutral/muted elements
+- Update or remove the legacy colors (`blue`, `cyan`, `lime`, `cream`) as they're deprecated
+
+#### 3. Background Elements
+
+Customize the decorative background elements in `frontend/src/common/components/background-elements.tsx`:
+
+- **Gradient orbs**: Adjust the colors, sizes, and positions of the animated blob elements
+- **Grid pattern**: Modify or remove the grid overlay
+- **Animations**: The blob animation can be customized in `frontend/src/index.css`
+
+To match your brand:
+- Replace color classes like `bg-brand-400/20` with your preferred brand color shades
+- Adjust opacity values to make elements more or less prominent
+- Modify animation timing in the `@keyframes blob` definition
+
+#### 4. Typography (Optional)
+
+The starter uses the Inter font family. To use a different font:
+
+- Add your font files to `frontend/public/fonts/`
+- Update the font face declarations in your CSS
+- Modify the `fontFamily` configuration in `frontend/tailwind.config.ts`
+
+#### 5. Theme System
+
+The starter includes a robust theme management system with support for light mode, dark mode, and system preference detection.
+
+**Key Features:**
+- CSS Variables-based theming for runtime customization
+- Redux-managed theme state with persistence
+- Automatic system preference detection
+- Type-safe theme switching
+- Semantic color tokens
+
+**Customizing Theme Colors:**
+
+Edit the CSS variables in `frontend/src/index.css`:
+
+```css
+:root {
+  --brand-500: 14 165 233;  /* Your primary brand color */
+  --background: 255 255 255; /* Light mode background */
+  --foreground: 15 23 42;    /* Light mode text */
+}
+
+.dark {
+  --brand-500: 56 189 248;   /* Dark mode brand color */
+  --background: 15 23 42;    /* Dark mode background */
+  --foreground: 248 250 252; /* Dark mode text */
+}
+```
+
+**Using the Theme System:**
+
+```tsx
+import { useTheme } from '@/common/hooks/use-theme.hook';
+
+function MyComponent() {
+  const { theme, resolvedTheme, setTheme } = useTheme();
+  
+  return (
+    <button onClick={() => setTheme('dark')}>
+      Current: {resolvedTheme}
+    </button>
+  );
+}
+```
+
+**Pre-built Theme Switcher:**
+
+Import the `ThemeSwitcher` component to add theme switching anywhere:
+
+```tsx
+import { ThemeSwitcher } from '@/common/components/theme-switcher.component';
+
+function Header() {
+  return <ThemeSwitcher variant="buttons" showLabels />;
+}
+```
+
+#### 6. Test Your Changes
+
+After customizing the visual identity:
+
+```bash
+cd frontend/
+pnpm run dev
+```
+
+Visit the sign-in, sign-up, and home screens to verify your branding looks consistent across all pages. Toggle between light and dark modes to ensure both themes look good.
 
 ### Secret Structure
 
@@ -87,7 +215,7 @@ Note that by default, Google login is disabled on ephemeral environments (becaus
 
 ### Cleanup
 
-Once you're done with the changes above, remove this section from the README. Commit and push to your new repository. This should automatically create your integration environment.
+Once you're done with all the setup steps above (placeholders, secrets, visual identity, etc.), remove the entire "Setup" section (including "Replacing Placeholders", "Customizing Visual Identity", "Secret Structure", "Extra Features", and "Cleanup") from the README. Commit and push to your new repository. This should automatically create your integration environment.
 
 ## Project Structure
 

@@ -20,7 +20,10 @@ export const SignInScreen: FC = () => {
     <CommonScreenContainer>
       <div className="w-full max-w-md space-y-8 relative z-10">
         <div className="text-center">
-          <h2 className="text-4xl font-bold tracking-tight text-white drop-shadow-lg">{t('sign_in_title')}</h2>
+          <div className="mb-6">
+            <img src="/images/logo.svg" alt="Logo" className="mx-auto h-32 w-auto" />
+          </div>
+          <h2 className="text-4xl font-bold tracking-tight text-gray-900">{t('sign_in_title')}</h2>
         </div>
 
         {environment?.ssoSignInEnabled && (
@@ -31,7 +34,7 @@ export const SignInScreen: FC = () => {
               disabled={isLoading}
               fullWidth
               variant="secondary"
-              className="flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-700 font-bold py-4 px-6 rounded-2xl shadow-lg border-4 border-gray-300 hover:border-gray-400 transition-all duration-200 hover:scale-105 text-lg"
+              className="flex items-center justify-center gap-3 bg-white hover:bg-gray-50 text-gray-700 font-semibold py-3 px-6 rounded-xl shadow-md border border-gray-300 hover:border-gray-400 transition-all duration-200 text-base"
             >
               <svg className="h-6 w-6" viewBox="0 0 24 24">
                 <path
@@ -59,19 +62,17 @@ export const SignInScreen: FC = () => {
         {environment?.selfSignUpEnabled && environment?.ssoSignInEnabled && (
           <div className="relative">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t-4 border-white/30" />
+              <div className="w-full border-t border-gray-300" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="bg-gradient-to-b from-blue-400 via-blue-300 to-blue-200 px-4 text-white font-bold text-lg drop-shadow">
-                {t('sign_in_divider')}
-              </span>
+              <span className="bg-white px-4 text-gray-600 font-medium">{t('sign_in_divider')}</span>
             </div>
           </div>
         )}
 
         {environment?.selfSignUpEnabled && (
           <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-4 bg-white/20 backdrop-blur-sm rounded-3xl p-6 border-4 border-white/30 shadow-xl">
+            <div className="space-y-4 bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
               <TextInput
                 id="email"
                 name="email"
@@ -107,11 +108,11 @@ export const SignInScreen: FC = () => {
                 {t('sign_in_submit')}
               </CommonButton>
 
-              <div className="text-center text-lg">
-                <span className="text-white/90 drop-shadow font-medium">{t('sign_in_alternate_prompt')}</span>{' '}
+              <div className="text-center">
+                <span className="text-gray-600 font-medium">{t('sign_in_alternate_prompt')}</span>{' '}
                 <Link
                   to={PathEnum.SIGN_UP}
-                  className="font-bold text-yellow-300 hover:text-yellow-200 drop-shadow underline decoration-2 hover:decoration-4 transition-all duration-200"
+                  className="font-semibold text-brand-600 hover:text-brand-700 underline decoration-2 transition-colors duration-200"
                 >
                   {t('sign_in_alternate_action')}
                 </Link>

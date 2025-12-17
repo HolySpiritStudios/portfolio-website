@@ -4,6 +4,149 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  font-size: 16px;
+@layer base {
+  :root {
+    /* Brand colors as CSS variables (RGB format for alpha channel support) */
+    --brand-50: 240 249 255;
+    --brand-100: 224 242 254;
+    --brand-200: 186 230 253;
+    --brand-300: 125 211 252;
+    --brand-400: 56 189 248;
+    --brand-500: 14 165 233;
+    --brand-600: 2 132 199;
+    --brand-700: 3 105 161;
+    --brand-800: 7 89 133;
+    --brand-900: 12 74 110;
+
+    /* Primary colors */
+    --primary-50: 240 249 255;
+    --primary-100: 224 242 254;
+    --primary-200: 186 230 253;
+    --primary-300: 125 211 252;
+    --primary-400: 56 189 248;
+    --primary-500: 14 165 233;
+    --primary-600: 2 132 199;
+    --primary-700: 3 105 161;
+    --primary-800: 7 89 133;
+    --primary-900: 12 74 110;
+
+    /* Secondary colors */
+    --secondary-50: 248 250 252;
+    --secondary-100: 241 245 249;
+    --secondary-200: 226 232 240;
+    --secondary-300: 203 213 225;
+    --secondary-400: 148 163 184;
+    --secondary-500: 100 116 139;
+    --secondary-600: 71 85 105;
+    --secondary-700: 51 65 85;
+    --secondary-800: 30 41 59;
+    --secondary-900: 15 23 42;
+
+    /* Semantic tokens */
+    --background: 255 255 255;
+    --foreground: 15 23 42;
+    --card: 255 255 255;
+    --card-foreground: 15 23 42;
+    --muted: 241 245 249;
+    --muted-foreground: 100 116 139;
+    --border: 226 232 240;
+    --input: 226 232 240;
+    --ring: 14 165 233;
+  }
+
+  .dark {
+    /* Dark mode overrides */
+    --brand-50: 12 74 110;
+    --brand-100: 7 89 133;
+    --brand-200: 3 105 161;
+    --brand-300: 2 132 199;
+    --brand-400: 14 165 233;
+    --brand-500: 56 189 248;
+    --brand-600: 125 211 252;
+    --brand-700: 186 230 253;
+    --brand-800: 224 242 254;
+    --brand-900: 240 249 255;
+
+    --primary-50: 12 74 110;
+    --primary-100: 7 89 133;
+    --primary-200: 3 105 161;
+    --primary-300: 2 132 199;
+    --primary-400: 14 165 233;
+    --primary-500: 56 189 248;
+    --primary-600: 125 211 252;
+    --primary-700: 186 230 253;
+    --primary-800: 224 242 254;
+    --primary-900: 240 249 255;
+
+    --secondary-50: 15 23 42;
+    --secondary-100: 30 41 59;
+    --secondary-200: 51 65 85;
+    --secondary-300: 71 85 105;
+    --secondary-400: 100 116 139;
+    --secondary-500: 148 163 184;
+    --secondary-600: 203 213 225;
+    --secondary-700: 226 232 240;
+    --secondary-800: 241 245 249;
+    --secondary-900: 248 250 252;
+
+    --background: 15 23 42;
+    --foreground: 248 250 252;
+    --card: 30 41 59;
+    --card-foreground: 248 250 252;
+    --muted: 51 65 85;
+    --muted-foreground: 203 213 225;
+    --border: 51 65 85;
+    --input: 51 65 85;
+    --ring: 56 189 248;
+  }
+
+  html {
+    font-size: 16px;
+  }
+  
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Animation for background blobs */
+  .animate-blob {
+    animation: blob 7s infinite;
+  }
+
+  .animation-delay-2000 {
+    animation-delay: 2s;
+  }
+
+  .animation-delay-4000 {
+    animation-delay: 4s;
+  }
+
+  /* Grid pattern background */
+  .bg-grid-slate-100 {
+    background-image:
+      linear-gradient(to right, rgb(241 245 249 / 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(241 245 249 / 0.1) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+}
+
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
 }

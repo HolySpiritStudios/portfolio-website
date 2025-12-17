@@ -18,13 +18,13 @@ export const SignUpScreen: FC = () => {
       <div className="w-full max-w-md space-y-8 relative z-10">
         <div className="text-center">
           <div className="mb-6">
-            <img src="/images/logo-no-bg.png" alt="Trash Cat" className="mx-auto h-24 w-auto" />
+            <img src="/images/logo.svg" alt="Logo" className="mx-auto h-16 w-auto" />
           </div>
           <h2 className="text-4xl font-bold tracking-tight text-gray-900">{t('sign_up_title')}</h2>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="space-y-4 bg-white rounded-3xl p-6 shadow-xl">
+          <div className="space-y-4 bg-white rounded-2xl p-6 border border-gray-200 shadow-lg">
             <TextInput
               id="name"
               name="name"
@@ -71,11 +71,11 @@ export const SignUpScreen: FC = () => {
               {t('sign_up_submit')}
             </CommonButton>
 
-            <div className="text-center text-lg">
-              <span className="text-gray-700 font-medium">{t('sign_up_alternate_prompt')}</span>{' '}
+            <div className="text-center">
+              <span className="text-gray-600 font-medium">{t('sign_up_alternate_prompt')}</span>{' '}
               <Link
                 to={PathEnum.SIGN_IN}
-                className="font-bold text-blue hover:text-blue-light underline decoration-2 hover:decoration-4 transition-all duration-200"
+                className="font-semibold text-brand-600 hover:text-brand-700 underline decoration-2 transition-colors duration-200"
               >
                 {t('sign_up_alternate_action')}
               </Link>
