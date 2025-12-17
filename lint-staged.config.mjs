@@ -1,11 +1,5 @@
-// Shared lint-staged configuration
-export const sharedConfig = {
-  '**/*.{json,md}': ['prettier --write'],
+export const typescriptModuleConfig = {
+  '**/*.ts': [() => 'tsc --noEmit', 'eslint --flag unstable_config_lookup_from_file --fix', 'prettier --write'],
 };
 
-export default {
-  ...sharedConfig,
-  '*.ts': [
-    'prettier --write',
-  ],
-};
+export default typescriptModuleConfig;
