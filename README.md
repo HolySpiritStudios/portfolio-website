@@ -52,6 +52,7 @@ colors: {
 ```
 
 **Tips:**
+
 - Use a color palette generator (like [Tailwind Color Generator](https://uicolors.app/create)) to create consistent shades from your main brand color
 - The `brand` color is used for primary buttons, links, and accents
 - The `primary` color is used for secondary UI elements
@@ -67,6 +68,7 @@ Customize the decorative background elements in `frontend/src/common/components/
 - **Animations**: The blob animation can be customized in `frontend/src/index.css`
 
 To match your brand:
+
 - Replace color classes like `bg-brand-400/20` with your preferred brand color shades
 - Adjust opacity values to make elements more or less prominent
 - Modify animation timing in the `@keyframes blob` definition
@@ -84,6 +86,7 @@ The starter uses the Inter font family. To use a different font:
 The starter includes a robust theme management system with support for light mode, dark mode, and system preference detection.
 
 **Key Features:**
+
 - CSS Variables-based theming for runtime customization
 - Redux-managed theme state with persistence
 - Automatic system preference detection
@@ -96,14 +99,14 @@ Edit the CSS variables in `frontend/src/index.css`:
 
 ```css
 :root {
-  --brand-500: 14 165 233;  /* Your primary brand color */
+  --brand-500: 14 165 233; /* Your primary brand color */
   --background: 255 255 255; /* Light mode background */
-  --foreground: 15 23 42;    /* Light mode text */
+  --foreground: 15 23 42; /* Light mode text */
 }
 
 .dark {
-  --brand-500: 56 189 248;   /* Dark mode brand color */
-  --background: 15 23 42;    /* Dark mode background */
+  --brand-500: 56 189 248; /* Dark mode brand color */
+  --background: 15 23 42; /* Dark mode background */
   --foreground: 248 250 252; /* Dark mode text */
 }
 ```
@@ -115,12 +118,8 @@ import { useTheme } from '@/common/hooks/use-theme.hook';
 
 function MyComponent() {
   const { theme, resolvedTheme, setTheme } = useTheme();
-  
-  return (
-    <button onClick={() => setTheme('dark')}>
-      Current: {resolvedTheme}
-    </button>
-  );
+
+  return <button onClick={() => setTheme('dark')}>Current: {resolvedTheme}</button>;
 }
 ```
 
