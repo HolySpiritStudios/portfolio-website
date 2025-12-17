@@ -1,5 +1,6 @@
 import { typescriptModuleConfig } from '../lint-staged.config.mjs';
 
 export default {
-  '**/*.{js,jsx,ts,tsx,mjs,mts}': typescriptModuleConfig['**/*.ts'],
+  '**/*.{json,md}': ['prettier --write'],
+  '**/*.{js,jsx,ts,tsx,mjs,mts,css}': typescriptModuleConfig['**/*.ts'],
 };
