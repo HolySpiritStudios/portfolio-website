@@ -17,7 +17,7 @@ export const CommonScreenContainer: FC<Props> = ({
   className,
 }) => {
   const containerClasses = twMerge(
-    'flex min-h-screen items-center justify-center bg-cream px-4 py-12 sm:px-6 lg:px-8 relative overflow-hidden',
+    'flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 via-white to-slate-100 px-4 py-12 sm:px-6 lg:px-8 relative overflow-hidden',
     className,
   );
 

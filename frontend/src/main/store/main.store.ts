@@ -6,11 +6,13 @@ import { EnvironmentSlice } from '../../config/slices/environment-slice/environm
 import { userManagementSliceReducer } from '../../user-management/slices/user-management-slice/user-management.slice';
 import { AppLifecycleSlice } from '../slices/app-lifecycle-slice/app-lifecycle.slice';
 import { AppSettingsSlice } from '../slices/app-settings-slice/app-settings.slice';
+import { ThemeSlice } from '../slices/theme-slice/theme.slice';
 
 export const rootReducer = combineReducers({
   appLifecycle: AppLifecycleSlice,
   appSettings: AppSettingsSlice,
   environment: EnvironmentSlice,
+  theme: ThemeSlice,
   userManagement: userManagementSliceReducer,
 });
 
