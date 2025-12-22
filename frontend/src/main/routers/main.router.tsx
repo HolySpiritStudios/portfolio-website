@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { RouterProvider, createBrowserRouter } from 'react-router';
 
+import { ChatRouter } from '../../chat/routers/chat.router';
 import { CommonSuspense } from '../../common/components/common-suspense';
 import { CommonSuspenseFallback } from '../../common/components/common-suspense-fallback';
 import { UserAuthenticatedScreenProtector } from '../../common/components/screen-protectors/user-authenticated-screen-protector';
@@ -29,6 +30,8 @@ const browserRouter = createBrowserRouter([
   },
 
   ...UserManagementRouter,
+
+  ...ChatRouter,
 
   {
     path: '*',

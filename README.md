@@ -159,7 +159,11 @@ The secrets in AWS Secrets Manager should follow this structure:
   "TIMEBACK_CLIENT_ID": "your-timeback-client-id",
   "TIMEBACK_CLIENT_SECRET": "your-timeback-client-secret",
   "GOOGLE_CLIENT_ID": "your-google-client-id",
-  "GOOGLE_CLIENT_SECRET": "your-google-client-secret"
+  "GOOGLE_CLIENT_SECRET": "your-google-client-secret",
+  "MCP_URL": "your-mcp-server-url",
+  "MCP_API_KEY": "your-mcp-api-key",
+  "SHORTIO_DOMAIN": "your-short-domain",
+  "SHORTIO_API_KEY": "your-shortio-api-key"
 }
 ```
 
@@ -173,8 +177,107 @@ The secrets in AWS Secrets Manager should follow this structure:
 - **TIMEBACK_CLIENT_SECRET**: OAuth client secret for TimeBack API integration (remove if not using TimeBack)
 - **GOOGLE_CLIENT_ID**: Google SSO OpenID client ID (remove if not using Google Sign-In)
 - **GOOGLE_CLIENT_SECRET**: Google SSO OpenID client ID (remove if not using Google Sign-In)
+- **MCP_URL**: MCP server URL for AI tool integrations (optional, remove if not using AI chat with tools)
+- **MCP_API_KEY**: API key for MCP server authentication (optional, remove if not using AI chat with tools)
+- **SHORTIO_DOMAIN**: Your Short.io domain for URL shortening (optional, example MCP integration)
+- **SHORTIO_API_KEY**: Short.io API key for URL shortening (optional, example MCP integration)
 
 ## Extra Features
+
+### AI Chat (with MCP Tool Use)
+
+This starter includes a production-ready AI chat feature powered by Amazon Bedrock and the AI SDK, with support for Model Context Protocol (MCP) tool integrations.
+
+**Key Features:**
+
+- **Streaming Responses**: Uses AWS Lambda Response Streaming for real-time Server-Sent Events (SSE)
+- **Extended Thinking**: Claude Sonnet 4.5 with reasoning budgets for thoughtful responses
+- **Tool Use**: MCP integration for extensible tool capabilities (Short.io URL shortening included as example)
+- **Session Context**: Optional session-specific context enrichment for personalized responses
+- **Type-Safe**: Fully typed with Zod schemas and TypeScript
+- **OpenAPI Documented**: Routes registered in OpenAPI spec for easy testing
+
+**Architecture:**
+
+```
+Frontend (React)              Backend (Lambda)           AI Services
+┌─────────────────┐          ┌──────────────────┐      ┌─────────────┐
+│ ChatSidepanel   │          │ chat-api-handler │      │   Bedrock   │
+│   Component     │──POST───▶│   (streaming)    │─────▶│   Claude    │
+│                 │          │                  │      │  Sonnet 4.5 │
+│ useChat hook    │◀──SSE────│  ChatRouter      │      └─────────────┘
+│ (@ai-sdk/react) │          │  ChatService     │
+└─────────────────┘          │  ChatController  │      ┌─────────────┐
+                             │                  │      │ MCP Tools   │
+                             │  MCP Integration │─────▶│ (Short.io)  │
+                             └──────────────────┘      └─────────────┘
+```
+
+**API Endpoints:**
+
+- `POST /chat/v1/stream` - Generic chat endpoint
+- `POST /chat/v1/sessions/{sessionId}/stream` - Session-specific chat with context
+
+**Setup:**
+
+1. **Add MCP Configuration to Secrets** (Optional - chat works without MCP):
+
+```json
+{
+  "MCP_URL": "https://ai-assistant.short.io/mcp",
+  "MCP_API_KEY": "your-shortio-api-key",
+  "SHORTIO_DOMAIN": "your-short-domain",
+  "SHORTIO_API_KEY": "your-shortio-api-key"
+}
+```
+
+2. **Frontend Integration**:
+
+```tsx
+import { ChatSidepanel } from '@/chat/components/chat-sidepanel.component';
+
+function MyScreen() {
+  const sessionId = 'session-123'; // Optional, for context-aware chat
+
+  return <ChatSidepanel sessionId={sessionId} />;
+}
+```
+
+3. **Backend Customization**:
+
+To add session-specific context (e.g., user data, documents, etc.):
+
+- Implement `IContextService` interface in `backend/app/chat/interfaces/context-service.interface.ts`
+- Inject your context service in `backend/entrypoints/containers/chat-service.container.ts`
+- Example: See PR#21 for `SessionContextService` implementation with TimeBack integration
+
+**Adding Custom MCP Tools:**
+
+1. Update secrets with your MCP server URL and credentials
+2. Modify `backend/entrypoints/containers/chat-service.container.ts`:
+
+```typescript
+const chatService = await ChatService.create({
+  mcpUrl: secrets.YOUR_MCP_URL,
+  mcpApiKey: secrets.YOUR_MCP_API_KEY,
+});
+```
+
+**Removing the Chat Feature:**
+
+If you don't need AI chat:
+
+1. Delete the following directories:
+   - `backend/app/chat/`
+   - `frontend/src/chat/`
+2. Remove chat routes from `infra/constructs/backend.construct.ts` (lines ~412-426)
+3. Remove chat Lambda handler: `backend/entrypoints/chat-api-handler.lambda.ts`
+4. Remove chat container: `backend/entrypoints/containers/chat-service.container.ts`
+5. Remove chat imports from `backend/debug/dev.ts`
+6. Remove dependencies:
+   - Backend: `@ai-sdk/amazon-bedrock`, `@ai-sdk/mcp`, `ai`
+   - Frontend: `@ai-sdk/react`, `ai`
+7. Remove MCP-related secrets from AWS Secrets Manager
 
 If you do not need Google login:
 

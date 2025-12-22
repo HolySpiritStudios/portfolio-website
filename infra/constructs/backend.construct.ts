@@ -150,6 +150,14 @@ export class BackendConstruct extends Construct {
       }),
     );
 
+    // Add Bedrock permissions for AI chat functionality
+    role.addToPolicy(
+      new PolicyStatement({
+        actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
+        resources: ['*'],
+      }),
+    );
+
     return role;
   }
 
@@ -311,6 +319,35 @@ export class BackendConstruct extends Construct {
     return lambda;
   }
 
+  /**
+   * Create Lambda function optimized for streaming responses
+   * Used for chat/SSE endpoints that require longer timeouts and more memory
+   */
+  private createStreamingLambdaFunction(props: BackendConstructProps, entryPath: string): NodejsFunction {
+    const name = entryPath.split('.')[0];
+    const functionName = getResourceName(props.environment, name);
+
+    const lambda = new NodejsFunction(this, name + 'Lambda', {
+      functionName,
+      entry: getLambdaPath(entryPath),
+      runtime: Runtime.NODEJS_22_X,
+      architecture: Architecture.ARM_64,
+      timeout: Duration.seconds(120), // Longer timeout for streaming
+      memorySize: 2048, // More memory for AI SDK and streaming
+      environment: this.getLambdaEnvVars(props),
+      role: this.lambdaRole,
+      bundling: {
+        minify: isProduction(props.environment),
+        sourceMap: !isProduction(props.environment),
+        externalModules: ['@smithy/eventstream-codec'], // Native module for streaming
+      },
+      logRetention: isProduction(props.environment) ? RetentionDays.ONE_YEAR : RetentionDays.TWO_WEEKS,
+      description: `Streaming chat handler for ${props.environment} environment`,
+    });
+
+    return lambda;
+  }
+
   private getApiSubdomain(props: BackendConstructProps): string {
     return props.subdomainName ? `api-${props.subdomainName}` : 'api';
   }
@@ -371,6 +408,22 @@ export class BackendConstruct extends Construct {
     const docsLambda = this.createLambdaFunction(props, 'docs-api-handler.lambda.ts');
     const docsResource = this.api.root.addResource('docs').addProxy();
     this.addAllMethodProxy(docsResource, docsLambda, false);
+
+    // Chat streaming routes (uses direct Lambda response streaming, not Hono)
+    const chatLambda = this.createStreamingLambdaFunction(props, 'chat-api-handler.lambda.ts');
+    const chatResource = this.api.root.addResource('chat').addResource('v1');
+
+    // Generic chat endpoint: POST /chat/v1/stream
+    const genericStreamResource = chatResource.addResource('stream');
+    genericStreamResource.addCorsPreflight(CORS_OPTIONS);
+    this.addStreamingMethod(genericStreamResource, chatLambda, true);
+
+    // Session-specific chat endpoint: POST /chat/v1/sessions/{sessionId}/stream
+    const sessionsResource = chatResource.addResource('sessions');
+    const sessionResource = sessionsResource.addResource('{sessionId}');
+    const sessionStreamResource = sessionResource.addResource('stream');
+    sessionStreamResource.addCorsPreflight(CORS_OPTIONS);
+    this.addStreamingMethod(sessionStreamResource, chatLambda, true);
   }
 
   private addAllMethodProxy(resource: IResource, lambda: NodejsFunction, authenticated = true): void {
@@ -393,6 +446,24 @@ export class BackendConstruct extends Construct {
         proxy: true,
         allowTestInvoke: true,
       }),
+    );
+  }
+
+  /**
+   * Add POST and OPTIONS methods for streaming endpoints
+   * Used for SSE/streaming responses that only support POST
+   */
+  private addStreamingMethod(resource: IResource, lambda: NodejsFunction, authenticated = true): void {
+    // POST for streaming chat messages
+    resource.addMethod(
+      'POST',
+      new LambdaIntegration(lambda, {
+        proxy: true,
+        allowTestInvoke: true,
+      }),
+      {
+        authorizer: authenticated ? this.authorizer : undefined,
+      },
     );
   }
 

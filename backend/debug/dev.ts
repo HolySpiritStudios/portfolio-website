@@ -6,6 +6,7 @@ import type { Context, Next } from 'hono';
 import { decodeJwt } from 'jose';
 import path from 'node:path';
 
+import { registerChatRoutes } from '../app/chat/routers/chat.hono-routes';
 import { DocsRouter } from '../app/common/routers/docs.router';
 import { Environment, EnvironmentService } from '../app/common/utils/environment.util';
 import { getAppLogger } from '../app/common/utils/logger.util';
@@ -24,6 +25,10 @@ export async function buildDevApp(config: Partial<Environment> = {}): Promise<Ap
 
   await buildAuthenticationRouter(config, app);
   await buildHelloWorldRouter(config, app);
+
+  // Register chat routes for OpenAPI generation
+  // Note: Actual streaming is handled by Lambda, these are for docs only
+  registerChatRoutes(app);
 
   await DocsRouter.create(environmentService, routesService, app);
 

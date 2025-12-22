@@ -5,6 +5,7 @@ import { EnvironmentEnum } from '../../../../main/constants/environment.constant
 import { ThunkApiConfigType } from '../../../../main/store/main.store';
 import { EnvironmentType } from '../../../../main/types/environment.type';
 import { getAwsConfigUtil } from '../../../../main/utils/aws/aws-config.util';
+import { initializeChatClient } from '../../../../main/utils/clients/chat-client.util';
 import { s3RequestClientUtil } from '../../../../main/utils/clients/s3-client.util';
 import { getUrlUtil } from '../../../../main/utils/url.util';
 import { signOutThunk } from '../../../../user-management/slices/user-management-slice/thunks/sign-out.thunk';
@@ -30,7 +31,7 @@ export const selectConfigThunk = createAsyncThunk<void, Props, ThunkApiConfigTyp
 
       const { data } = await s3RequestClientUtil.get<EnvironmentType>(url);
 
-      const apiUrl = EnvironmentVariable.FORCED_API_URL ?? data.apiUrl;
+      const apiUrl: string = data.apiUrl;
       dispatch(
         setEnvironment({
           name: selectedEnvironmentName,
@@ -41,6 +42,7 @@ export const selectConfigThunk = createAsyncThunk<void, Props, ThunkApiConfigTyp
       dispatch(signOutThunk());
 
       getAwsConfigUtil().configureAws(data);
+      initializeChatClient(apiUrl);
 
       const { isRemoved, url: newUrl } = getUrlUtil().removeQueryParams(window.location.href, ['setEnv']);
       if (isRemoved) {
