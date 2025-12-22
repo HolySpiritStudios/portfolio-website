@@ -67,14 +67,6 @@ export const handler = awslambda.streamifyResponse(async (event, responseStream)
     },
   });
 
-  // Handle CORS preflight
-  if (method === 'OPTIONS') {
-    logger.info('Handling OPTIONS request');
-    httpStream.write('data: OK\\n\\n');
-    httpStream.end();
-    return;
-  }
-
   try {
     const router = await getRouter();
     const stream = await router.route(event);
