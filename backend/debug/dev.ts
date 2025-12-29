@@ -39,7 +39,7 @@ export async function buildDevApp(config: Partial<Environment> = {}): Promise<Ap
   // Register OpenAPI documentation routes for chat
   // These are registered AFTER actual handlers, but they still add metadata to OpenAPI spec
   // The handlers won't be called because Hono already matched the routes above
-  registerChatRoutes(app, false);
+  registerChatRoutes(app);
 
   await DocsRouter.create(environmentService, routesService, app);
 
