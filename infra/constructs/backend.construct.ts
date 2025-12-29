@@ -1,5 +1,6 @@
 import { CfnOutput, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import {
+  AuthorizationType,
   CognitoUserPoolsAuthorizer,
   Cors,
   CorsOptions,
@@ -33,7 +34,7 @@ import {
   Role,
   ServicePrincipal,
 } from 'aws-cdk-lib/aws-iam';
-import { Architecture, CfnFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { ARecord, HostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
@@ -394,16 +395,11 @@ export class BackendConstruct extends Construct {
     this.addAllMethodProxy(docsResource, docsLambda, { authType: 'none' });
 
     // Chat streaming routes (uses direct Lambda response streaming, not Hono)
+    // Response streaming is enabled by:
+    // 1. Using awslambda.streamifyResponse() in the Lambda handler
+    // 2. Setting ResponseTransferMode.STREAM in the API Gateway integration
     const chatLambda = this.createLambdaFunction(props, 'chat-api-handler.lambda.ts', {
       timeout: Duration.minutes(5),
-    });
-
-    // Configure the Lambda for response streaming
-    const cfnFunction = chatLambda.node.defaultChild as CfnFunction;
-    cfnFunction.addPropertyOverride('InvokeConfig', {
-      ResponseStreamingOptions: {
-        Mode: 'RESPONSE_STREAM',
-      },
     });
 
     const chatResource = this.api.root.addResource('chat').addResource('v1').addProxy();
@@ -424,6 +420,7 @@ export class BackendConstruct extends Construct {
         }),
         {
           authorizer: authType === 'cognito' ? this.authorizer : undefined,
+          authorizationType: authType === 'iam' ? AuthorizationType.IAM : undefined,
         },
       );
     });
