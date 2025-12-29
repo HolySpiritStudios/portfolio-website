@@ -224,19 +224,20 @@ Frontend (React)              Backend (Lambda)           AI Services
 
 ```json
 {
-  "MCP_SERVERS": "shortio|https://ai-assistant.short.io/mcp|your-api-key",
+  "MCP_SERVERS": "[{\"name\":\"shortio\",\"url\":\"https://ai-assistant.short.io/mcp\",\"auth\":{\"headerName\":\"authorization\",\"value\":\"your-api-key\"}}]",
   "CHAT_MODEL": "anthropic.claude-sonnet-4-20250514-v1:0"
 }
 ```
 
 **Configuration Options:**
 
-- `MCP_SERVERS` (optional): Comma-delimited list of MCP servers in format `"name|url|apiKey,name|url|apiKey"`
-  - Example: `"shortio|https://api1.com/mcp|key1,custom|https://api2.com/mcp|key2"`
-  - Without names: `"https://api1.com/mcp|key1,https://api2.com/mcp|key2"` (auto-assigned server1, server2, etc.)
+- `MCP_SERVERS` (optional): JSON array of MCP server configurations (as a string)
+  - Format: `[{"name":"shortio","url":"https://api1.com/mcp","auth":{"headerName":"authorization","value":"key1"}}]`
+  - `name` is optional (defaults to server1, server2, etc.)
+  - Each server requires: `url`, `auth.headerName`, and `auth.value`
 - `CHAT_MODEL` (optional): Bedrock model ID to use for chat
-  - Defaults to `anthropic.claude-opus-4-5-20251101-v1:0` (best for complex reasoning)
-  - Use `anthropic.claude-sonnet-4-20250514-v1:0` for faster, more cost-effective responses
+  - Defaults to `global.anthropic.claude-opus-4-5-20251101-v1:0` (best for complex reasoning)
+  - Use `global.anthropic.claude-sonnet-4-20250514-v1:0` for faster, more cost-effective responses
 
 2. **Frontend Integration**:
 
@@ -276,8 +277,8 @@ The AI model is configurable via the `CHAT_MODEL` secret in AWS Secrets Manager 
 
 Available models:
 
-- `anthropic.claude-opus-4-5-20251101-v1:0` (default) - Best for complex reasoning and coding
-- `anthropic.claude-sonnet-4-20250514-v1:0` - Balanced performance and cost
+- `global.anthropic.claude-opus-4-5-20251101-v1:0` (default) - Best for complex reasoning and coding
+- `global.anthropic.claude-sonnet-4-20250514-v1:0` - Balanced performance and cost
 - Any other Bedrock-supported model ID
 
 **Removing the Chat Feature:**

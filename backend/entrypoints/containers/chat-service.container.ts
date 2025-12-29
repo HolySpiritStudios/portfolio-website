@@ -1,4 +1,5 @@
 import { ChatController } from '../../app/chat/controllers/chat.controller';
+import { MCPServer } from '../../app/chat/models/mcp-server.model';
 import { ChatRouter } from '../../app/chat/routers/chat.router';
 import { ChatService } from '../../app/chat/services/chat.service';
 import { SecretsService } from '../../app/common/integrations/aws/services/secrets.service';
@@ -7,18 +8,32 @@ import { getAppLogger } from '../../app/common/utils/logger.util';
 
 const logger = getAppLogger('chat-service-container');
 
-interface MCPServer {
-  url: string;
-  apiKey: string;
-  name?: string; // Optional name for tool namespacing
-}
-
 interface ChatSecrets {
   /**
-   * MCP_SERVERS: Comma-delimited list of MCP servers in format "name|url|apiKey,name|url|apiKey"
-   * Name is optional: "url|apiKey" also works, will use "server1", "server2", etc.
-   * Example with names: "shortio|https://api1.com/mcp|key123,custom|https://api2.com/mcp|key456"
-   * Example without names: "https://api1.com/mcp|key123,https://api2.com/mcp|key456"
+   * MCP_SERVERS: JSON array of MCP server configurations
+   * Format: JSON array of objects with name, url, and auth properties
+   *
+   * Example:
+   * [
+   *   {
+   *     "name": "shortio",
+   *     "url": "https://ai-assistant.short.io/mcp",
+   *     "auth": {
+   *       "headerName": "authorization",
+   *       "value": "sk_xxx"
+   *     }
+   *   },
+   *   {
+   *     "name": "github",
+   *     "url": "https://api2.com/mcp",
+   *     "auth": {
+   *       "headerName": "x-api-key",
+   *       "value": "Bearer ghp_xxx"
+   *     }
+   *   }
+   * ]
+   *
+   * Note: 'name' is optional and will default to "server1", "server2", etc. if omitted
    */
   MCP_SERVERS?: string;
 
@@ -33,55 +48,92 @@ interface ChatSecrets {
 }
 
 /**
- * Parse comma-delimited MCP servers from secrets
- * Format: "name|url|apiKey,name|url|apiKey,..." or "url|apiKey,url|apiKey,..."
+ * Parse JSON array of MCP servers from secrets
+ * Format: JSON array of objects with name, url, and auth properties
+ * - name: Optional server name for namespacing (defaults to "server1", "server2", etc.)
+ * - url: MCP server URL
+ * - auth: Object with headerName and value properties
+ *
+ * Example:
+ * [
+ *   {
+ *     "name": "shortio",
+ *     "url": "https://ai-assistant.short.io/mcp",
+ *     "auth": { "headerName": "authorization", "value": "sk_xxx" }
+ *   }
+ * ]
  */
 function parseMCPServers(mcpServersString?: string): MCPServer[] {
-  if (!mcpServersString) {
+  if (!mcpServersString || mcpServersString.trim().length === 0) {
     return [];
   }
 
-  const servers: MCPServer[] = [];
+  try {
+    const parsed = JSON.parse(mcpServersString);
 
-  mcpServersString
-    .split(',')
-    .map((serverStr) => serverStr.trim())
-    .filter((serverStr) => serverStr.length > 0)
-    .forEach((serverStr, index) => {
-      const parts = serverStr.split('|').map((s) => s.trim());
+    if (!Array.isArray(parsed)) {
+      logger.warn('MCP_SERVERS must be a JSON array, skipping', { type: typeof parsed });
+      return [];
+    }
 
-      // Support both formats: "name|url|apiKey" and "url|apiKey"
-      if (parts.length === 3) {
-        const [name, url, apiKey] = parts;
-        if (!url || !apiKey) {
-          logger.warn('Invalid MCP server format, skipping', { serverStr });
-          return;
-        }
-        servers.push({ name, url, apiKey });
-      } else if (parts.length === 2) {
-        const [url, apiKey] = parts;
-        if (!url || !apiKey) {
-          logger.warn('Invalid MCP server format, skipping', { serverStr });
-          return;
-        }
-        servers.push({ url, apiKey, name: `server${index + 1}` });
-      } else {
-        logger.warn('Invalid MCP server format, expected "name|url|apiKey" or "url|apiKey", skipping', { serverStr });
+    const servers: MCPServer[] = [];
+
+    parsed.forEach((item, index) => {
+      // Validate required fields
+      if (!item || typeof item !== 'object') {
+        logger.warn('Invalid MCP server entry (not an object), skipping', { index, item });
+        return;
       }
+
+      if (!item.url || typeof item.url !== 'string') {
+        logger.warn('Invalid MCP server entry (missing or invalid url), skipping', { index, item });
+        return;
+      }
+
+      if (!item.auth || typeof item.auth !== 'object') {
+        logger.warn('Invalid MCP server entry (missing or invalid auth), skipping', { index, item });
+        return;
+      }
+
+      if (!item.auth.headerName || typeof item.auth.headerName !== 'string') {
+        logger.warn('Invalid MCP server entry (missing or invalid auth.headerName), skipping', { index, item });
+        return;
+      }
+
+      if (!item.auth.value || typeof item.auth.value !== 'string') {
+        logger.warn('Invalid MCP server entry (missing or invalid auth.value), skipping', { index, item });
+        return;
+      }
+
+      // Build server object with optional name
+      const server: MCPServer = {
+        url: item.url.trim(),
+        auth: {
+          headerName: item.auth.headerName.trim(),
+          value: item.auth.value.trim(),
+        },
+        name: item.name && typeof item.name === 'string' ? item.name.trim() : `server${index + 1}`,
+      };
+
+      servers.push(server);
     });
 
-  return servers;
+    return servers;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.error('Failed to parse MCP_SERVERS JSON, skipping MCP integration', { error: errorMessage });
+    return [];
+  }
 }
 
 /**
  * Build ChatRouter with all dependencies
  *
  * MCP Integration:
- * - Supports multiple MCP servers via comma-delimited MCP_SERVERS secret
- * - Format with names: "name|url|apiKey,name|url|apiKey"
- * - Format without names: "url|apiKey,url|apiKey" (auto-assigned server1, server2, etc.)
+ * - Supports multiple MCP servers via JSON array in MCP_SERVERS secret
+ * - Format: JSON array of objects with name, url, and auth properties
  * - Tools are namespaced by server name to prevent conflicts
- * - Example: "shortio|https://api1.com/mcp|key1,custom|https://api2.com/mcp|key2"
+ * - Example: [{"name":"shortio","url":"https://api1.com/mcp","auth":{"headerName":"authorization","value":"key1"}}]
  * - Chat works without MCP if not configured (graceful degradation)
  *
  * Model Configuration:
@@ -101,6 +153,20 @@ export async function buildChatRouter(config: Partial<Environment> = {}): Promis
   const secrets = await secretsService.getSecret<ChatSecrets>(secretId);
 
   const mcpServers = parseMCPServers(secrets.MCP_SERVERS);
+
+  // Debug: Log parsed servers (mask API keys for security)
+  if (mcpServers.length > 0) {
+    logger.info('Parsed MCP servers', {
+      count: mcpServers.length,
+      servers: mcpServers.map((s) => ({
+        name: s.name,
+        url: s.url,
+        headerName: s.auth.headerName,
+        hasApiKey: !!s.auth.value,
+        apiKeyLength: s.auth.value?.length || 0,
+      })),
+    });
+  }
 
   // Optional: Implement ContextService here for session-specific context
   // Example:

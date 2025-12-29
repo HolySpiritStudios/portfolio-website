@@ -8,26 +8,13 @@ import { AuthContext } from '../../common/models/auth-context.model';
 import { getAppLogger } from '../../common/utils/logger.util';
 import { IContextService } from '../interfaces/context-service.interface';
 import { ChatMessage } from '../models/chat-stream.model';
+import { ChatServiceConfig, MCPServer } from '../models/mcp-server.model';
 
 const logger = getAppLogger('chat-service');
 
 // Default model: Claude Opus 4.5 for superior coding capabilities and complex reasoning
-// Can be overridden via ChatServiceConfig to support different models per use case
-const DEFAULT_MODEL = 'anthropic.claude-opus-4-5-20251101-v1:0';
-
-interface MCPServer {
-  url: string;
-  apiKey: string;
-  name?: string; // Optional name for tool namespacing
-}
-
-interface ChatServiceConfig {
-  // Optional MCP integration - supports multiple servers
-  mcpServers?: MCPServer[];
-  // Optional model override (defaults to Claude Opus 4.5)
-  // Examples: 'anthropic.claude-sonnet-4-20250514-v1:0', 'anthropic.claude-opus-4-5-20251101-v1:0'
-  model?: string;
-}
+// Using inference profile (global.) for on-demand throughput access
+const DEFAULT_MODEL = 'global.anthropic.claude-opus-4-5-v1:0';
 
 export class ChatService {
   private constructor(
@@ -56,12 +43,12 @@ export class ChatService {
         const serverName: string = server.name || `server${i + 1}`;
 
         try {
-          logger.info('Initializing MCP client', { serverName, url: server.url });
+          logger.info('Initializing MCP client', { serverName, url: server.url, headerName: server.auth.headerName });
           const mcpClient = await createMCPClient({
             transport: {
               type: 'http',
               url: server.url,
-              headers: { 'X-Api-Key': server.apiKey },
+              headers: { [server.auth.headerName]: server.auth.value },
             },
           });
           const serverTools = (await mcpClient.tools()) as ToolSet;

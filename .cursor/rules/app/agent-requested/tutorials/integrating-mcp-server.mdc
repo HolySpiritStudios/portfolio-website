@@ -6,11 +6,41 @@ alwaysApply: false
 
 ## Quick Start
 
-Add multiple MCP servers using a single comma-delimited secret in AWS Secrets Manager. Tools are automatically namespaced by server name to prevent conflicts.
+Add multiple MCP servers using a JSON array in AWS Secrets Manager. Tools are automatically namespaced by server name to prevent conflicts.
 
 ### 1. Add Secret
 
-**Format:** `"name|url|apiKey,name|url|apiKey,..."` or `"url|apiKey,url|apiKey,..."`
+**Format:** JSON array of objects with `name`, `url`, and `auth` properties:
+
+```json
+[
+  {
+    "name": "shortio",
+    "url": "https://ai-assistant.short.io/mcp",
+    "auth": {
+      "headerName": "authorization",
+      "value": "sk_xxx"
+    }
+  },
+  {
+    "name": "github",
+    "url": "https://api2.com/mcp",
+    "auth": {
+      "headerName": "x-api-key",
+      "value": "Bearer ghp_xxx"
+    }
+  }
+]
+```
+
+**Property Details:**
+- **name** (optional): Server name for tool namespacing. Defaults to `server1`, `server2`, etc. if omitted
+- **url** (required): MCP server endpoint URL
+- **auth** (required): Object with authentication details
+  - **headerName** (required): HTTP header name (e.g., `authorization`, `x-api-key`)
+  - **value** (required): API key or token value
+
+**Update Secret:**
 
 ```bash
 # Get current secret
@@ -21,7 +51,7 @@ aws secretsmanager get-secret-value \
 
 # Add MCP_SERVERS key (edit secret.json)
 {
-  "MCP_SERVERS": "shortio|https://ai-assistant.short.io/mcp|key123,custom|https://api2.com/mcp|key456",
+  "MCP_SERVERS": "[{\"name\":\"shortio\",\"url\":\"https://ai-assistant.short.io/mcp\",\"auth\":{\"headerName\":\"authorization\",\"value\":\"sk_xxx\"}}]",
   ...existing keys...
 }
 
@@ -31,6 +61,11 @@ aws secretsmanager put-secret-value \
   --profile wseng \
   --secret-string file://secret.json && rm secret.json
 ```
+
+**Common Header Formats:**
+- Short.io: `"headerName": "authorization", "value": "sk_30JRJu4gZFAdyKtO"`
+- GitHub-style: `"headerName": "authorization", "value": "Bearer ghp_xxx"`
+- API Gateway: `"headerName": "x-api-key", "value": "abc123"`
 
 ### 2. Deploy
 
@@ -59,43 +94,51 @@ Expected:
 
 **Solution:** Tools are automatically namespaced by server name.
 
-**Example:**
+**Example with explicit names:**
+```json
+[
+  {"name": "shortio", "url": "https://api1.com/mcp", "auth": {...}},
+  {"name": "custom", "url": "https://api2.com/mcp", "auth": {...}}
+]
 ```
-Server "shortio" has tool "create_link"
-→ Becomes: "shortio_create_link"
 
-Server "custom" has tool "create_link"
-→ Becomes: "custom_create_link"
+Server "shortio" has tool "create_link" → Becomes: "shortio_create_link"
+Server "custom" has tool "create_link" → Becomes: "custom_create_link"
 
 Both coexist without conflict!
-```
 
 **Without names** (auto-assigned):
+```json
+[
+  {"url": "https://api1.com/mcp", "auth": {...}},
+  {"url": "https://api2.com/mcp", "auth": {...}}
+]
 ```
-MCP_SERVERS="https://api1.com/mcp|key1,https://api2.com/mcp|key2"
 
 Server 1 tools: server1_tool_name
 Server 2 tools: server2_tool_name
-```
 ## Removing MCP Servers
 
 To remove an MCP server from the configuration:
 
 1. Edit the `MCP_SERVERS` secret in AWS Secrets Manager
-2. Remove the server entry from the comma-delimited string
+2. Remove the server object from the JSON array
 3. When setting up be sure to remove the short.io server from the configuration.
 
 ## Architecture
 
 ```
-Container → Parse "name|url|key,..." → ChatService → Initialize each server
-                                                   → Namespace tools
-                                                   → Merge into single ToolSet
-                                                   → Pass to AI model
+Container → Parse JSON array → ChatService → Initialize each server
+                                          → Use specified auth header
+                                          → Namespace tools
+                                          → Merge into single ToolSet
+                                          → Pass to AI model
 ```
 
 **Key Features:**
-- ✅ Unlimited MCP servers (comma-delimited)
+- ✅ Unlimited MCP servers (JSON array)
+- ✅ Self-documenting JSON format with named properties
+- ✅ Flexible auth headers (`authorization`, `x-api-key`, custom)
 - ✅ Tool namespacing prevents conflicts
 - ✅ Graceful per-server error handling
 - ✅ Optional or auto-assigned server names
@@ -104,9 +147,21 @@ Container → Parse "name|url|key,..." → ChatService → Initialize each serve
 ## Troubleshooting
 
 ### No tools loaded
-- Check format: `"name|url|apiKey"` or `"url|apiKey"`
+- Check JSON format is valid (use a JSON validator)
+- Verify `MCP_SERVERS` is a properly escaped JSON string in the secret
+- Check required fields: `url`, `auth.headerName`, `auth.value`
 - Verify URL is HTTPS
 - Check API key validity
+
+### JSON parsing errors
+- Ensure the JSON is properly escaped when stored in AWS Secrets Manager
+- Use double quotes for all strings in JSON
+- Validate JSON structure matches the format above
+
+### Authentication errors (401/403)
+- Verify `auth.headerName` matches server's expected format
+- Check if API key needs "Bearer " prefix in `auth.value`
+- Confirm API key is valid and not expired
 
 ### Tool name collisions (shouldn't happen)
 - Tools are auto-namespaced by server name
