@@ -1,16 +1,18 @@
+import { API_ROUTES } from '@ws-mono/shared';
+
 import type { APIGatewayProxyEvent, APIGatewayProxyEventV2 } from 'aws-lambda';
 
 import { extractAuthContext } from '../../common/utils/auth.util';
 import { InvalidArgumentsError, NotFoundError } from '../../common/utils/errors';
 import { getAppLogger } from '../../common/utils/logger.util';
+import { routeToPattern } from '../../common/utils/routes.util';
 import { ChatStreamResult, IChatController } from '../interfaces/chat-controller.interface';
 import { ChatStreamRequestSchema } from '../models/chat-stream.model';
 
 const logger = getAppLogger('chat-router');
 
-// Route patterns
-const GENERIC_STREAM_REGEX = /^\/chat\/v1\/stream$/;
-const SESSION_STREAM_REGEX = /^\/chat\/v1\/sessions\/([^/]+)\/stream$/;
+const GENERIC_STREAM_PATTERN = routeToPattern(API_ROUTES.CHAT.STREAM);
+const SESSION_STREAM_PATTERN = routeToPattern(API_ROUTES.CHAT.SESSION_STREAM);
 
 /**
  * Router for chat streaming endpoints
@@ -39,7 +41,7 @@ export class ChatRouter {
     }
 
     // Try session-specific route first (more specific)
-    const sessionMatch = SESSION_STREAM_REGEX.exec(path);
+    const sessionMatch = SESSION_STREAM_PATTERN.exec(path);
     if (sessionMatch) {
       const sessionId = decodeURIComponent(sessionMatch[1]);
       logger.info('Routing to session chat', { sessionId, userId: authContext.userId });
@@ -47,7 +49,7 @@ export class ChatRouter {
     }
 
     // Try generic route
-    const genericMatch = GENERIC_STREAM_REGEX.exec(path);
+    const genericMatch = GENERIC_STREAM_PATTERN.exec(path);
     if (genericMatch) {
       logger.info('Routing to generic chat', { userId: authContext.userId });
       return this.controller.streamChat(parsed.data.messages, authContext);

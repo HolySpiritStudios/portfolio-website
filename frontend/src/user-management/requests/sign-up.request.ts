@@ -1,3 +1,5 @@
+import { API_ROUTES } from '@ws-mono/shared';
+
 import { CommonSuccessResponse } from '../../common/models/common-request.model.ts';
 import { getRestClientUtil } from '../../main/utils/clients/rest-client.util.ts';
 
@@ -8,7 +10,7 @@ interface Props {
 }
 
 export const signUpRequest = async (props: Props) => {
-  const response = await getRestClientUtil().post<CommonSuccessResponse, Props>('/authentication/v1/sign-up', props, {
+  const response = await getRestClientUtil().post<CommonSuccessResponse, Props>(API_ROUTES.AUTH.SIGN_UP, props, {
     useAuth: false,
   });
 

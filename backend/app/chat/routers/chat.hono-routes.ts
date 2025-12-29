@@ -1,4 +1,5 @@
 import { createRoute } from '@hono/zod-openapi';
+import { API_ROUTES } from '@ws-mono/shared';
 
 import { z } from 'zod';
 
@@ -12,7 +13,7 @@ import { ChatStreamRequestSchema, chatStreamResponseSchema } from '../models/cha
  */
 export const streamChatRoute = createRoute({
   method: 'post',
-  path: '/chat/v1/stream',
+  path: API_ROUTES.CHAT.STREAM,
   tags: ['Chat'],
   summary: 'Stream AI chat responses',
   description:
@@ -47,7 +48,7 @@ export const streamChatRoute = createRoute({
  */
 export const streamSessionChatRoute = createRoute({
   method: 'post',
-  path: '/chat/v1/sessions/{sessionId}/stream',
+  path: API_ROUTES.CHAT.SESSION_STREAM,
   tags: ['Chat'],
   summary: 'Stream context-aware chat responses',
   description:

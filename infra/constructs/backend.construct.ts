@@ -1,3 +1,5 @@
+import { SSE_HEADERS } from '@ws-mono/shared';
+
 import { CfnOutput, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import {
   AuthorizationType,
@@ -49,7 +51,7 @@ import { getLambdaPath } from '../utils/directory.util';
 const CORS_OPTIONS: CorsOptions = {
   allowOrigins: Cors.ALL_ORIGINS,
   allowMethods: Cors.ALL_METHODS,
-  allowHeaders: [...Cors.DEFAULT_HEADERS, 'Authorization', 'Content-Type'],
+  allowHeaders: [...Cors.DEFAULT_HEADERS, 'Authorization', 'Content-Type', ...Object.keys(SSE_HEADERS)],
   allowCredentials: true,
 };
 

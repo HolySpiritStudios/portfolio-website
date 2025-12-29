@@ -1,3 +1,5 @@
+import { API_ROUTES } from '@ws-mono/shared';
+
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { fetchAuthSession } from 'aws-amplify/auth';
 
@@ -32,8 +34,9 @@ export class ChatClientUtil {
    * @returns Transport object for useChat hook
    */
   getTransport(sessionId: string): DefaultChatTransport<UIMessage> {
+    const path = API_ROUTES.CHAT.SESSION_STREAM.replace(':sessionId', encodeURIComponent(sessionId));
     return new DefaultChatTransport({
-      api: `${this.baseUrl}/chat/v1/sessions/${encodeURIComponent(sessionId)}/stream`,
+      api: `${this.baseUrl}${path}`,
       headers: async () => {
         const token = await this.getIdToken();
         return { Authorization: `Bearer ${token}` };
@@ -48,8 +51,9 @@ export class ChatClientUtil {
    * @returns Transport object for useChat hook
    */
   getGenericTransport(): DefaultChatTransport<UIMessage> {
+    const path = API_ROUTES.CHAT.STREAM;
     return new DefaultChatTransport({
-      api: `${this.baseUrl}/chat/v1/stream`,
+      api: `${this.baseUrl}${path}`,
       headers: async () => {
         const token = await this.getIdToken();
         return { Authorization: `Bearer ${token}` };

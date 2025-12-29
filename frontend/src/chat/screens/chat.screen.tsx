@@ -13,8 +13,8 @@ import { ChatMessageList } from '../components/chat-message-list.component';
  * Supports both generic chat and session-specific chat based on URL parameter
  *
  * Routes:
- * - /chat - Generic chat without context
- * - /chat/sessions/:sessionId - Session-specific chat with context
+ * - /chat/v1/stream - Generic chat without context
+ * - /chat/v1/sessions/:sessionId/stream - Session-specific chat with context
  */
 export function ChatScreen() {
   const { sessionId } = useParams<{ sessionId?: string }>();

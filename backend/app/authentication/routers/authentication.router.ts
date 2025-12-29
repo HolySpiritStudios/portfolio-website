@@ -1,4 +1,5 @@
 import { createRoute } from '@hono/zod-openapi';
+import { API_ROUTES } from '@ws-mono/shared';
 
 import type { APIGatewayProxyEvent, APIGatewayProxyEventV2 } from 'aws-lambda';
 import { LambdaEvent, handle } from 'hono/aws-lambda';
@@ -14,7 +15,6 @@ export class AuthenticationRouter {
   constructor(
     private readonly controller: IAuthenticationController,
     private readonly app: App,
-    private readonly basePath = '/authentication/v1',
   ) {
     this.setupSignUp();
     this.setupLtiLaunch();
@@ -22,15 +22,11 @@ export class AuthenticationRouter {
     this.handler = handle(this.app);
   }
 
-  private prefixed(path: string): string {
-    return `${this.basePath}${path}`;
-  }
-
   private setupSignUp() {
     this.app.openapi(
       createRoute({
         method: 'post',
-        path: this.prefixed('/sign-up'),
+        path: API_ROUTES.AUTH.SIGN_UP,
         tags: ['Authentication'],
         summary: 'Sign up a new user',
         description: 'Create a new user account with email and password',
@@ -55,7 +51,7 @@ export class AuthenticationRouter {
     this.app.openapi(
       createRoute({
         method: 'post',
-        path: this.prefixed('/lti/1.3/launch'),
+        path: API_ROUTES.AUTH.LTI_LAUNCH,
         tags: ['Authentication'],
         summary: 'LTI 1.3 launch endpoint',
         description: 'Handle LTI 1.3 launch requests from learning management systems',

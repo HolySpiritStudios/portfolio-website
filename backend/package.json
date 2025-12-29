@@ -15,6 +15,7 @@
     "fix:lint": "eslint . --fix"
   },
   "dependencies": {
+    "@ws-mono/shared": "workspace:*",
     "@ai-sdk/amazon-bedrock": "^3.0.62",
     "@ai-sdk/mcp": "^0.0.11",
     "@aws-lambda-powertools/commons": "catalog:",

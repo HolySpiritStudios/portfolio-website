@@ -1,5 +1,6 @@
 import { AssumeRoleCommand, Credentials, STSClient } from '@aws-sdk/client-sts';
 import { serve } from '@hono/node-server';
+import { API_ROUTES, SSE_HEADERS } from '@ws-mono/shared';
 
 import type { APIGatewayProxyEvent } from 'aws-lambda';
 import { config as dotenvConfig } from 'dotenv';
@@ -65,14 +66,14 @@ async function registerLocalChatRoutes(config: Partial<Environment>, app: App): 
   const chatRouter = await buildChatRouter(config);
 
   // Generic chat streaming endpoint
-  app.post('/chat/v1/stream', async (c) => {
+  app.post(API_ROUTES.CHAT.STREAM, async (c) => {
     logger.info('Handling generic chat stream request');
 
     try {
       // Create a mock APIGatewayProxyEvent from Hono context
       const event: Partial<APIGatewayProxyEvent> = {
         httpMethod: 'POST',
-        path: '/chat/v1/stream',
+        path: API_ROUTES.CHAT.STREAM,
         body: JSON.stringify(await c.req.json()),
         requestContext: (c.env.event?.requestContext || {}) as APIGatewayProxyEvent['requestContext'],
       };
@@ -80,9 +81,9 @@ async function registerLocalChatRoutes(config: Partial<Environment>, app: App): 
       const stream = await chatRouter.route(event as APIGatewayProxyEvent);
 
       // Set SSE headers
-      c.header('Content-Type', 'text/event-stream; charset=utf-8');
-      c.header('Cache-Control', 'no-cache');
-      c.header('Connection', 'keep-alive');
+      Object.entries(SSE_HEADERS).forEach(([key, value]) => {
+        c.header(key, value);
+      });
 
       // Stream the response
       const readable = new ReadableStream({
@@ -103,11 +104,7 @@ async function registerLocalChatRoutes(config: Partial<Environment>, app: App): 
       });
 
       return new Response(readable, {
-        headers: {
-          'Content-Type': 'text/event-stream; charset=utf-8',
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-        },
+        headers: SSE_HEADERS,
       });
     } catch (error) {
       logger.error('Chat stream error', { error });
@@ -116,7 +113,7 @@ async function registerLocalChatRoutes(config: Partial<Environment>, app: App): 
   });
 
   // Session-specific chat streaming endpoint
-  app.post('/chat/v1/sessions/:sessionId/stream', async (c) => {
+  app.post(API_ROUTES.CHAT.SESSION_STREAM, async (c) => {
     const sessionId = c.req.param('sessionId');
     logger.info('Handling session chat stream request', { sessionId });
 
@@ -124,7 +121,7 @@ async function registerLocalChatRoutes(config: Partial<Environment>, app: App): 
       // Create a mock APIGatewayProxyEvent from Hono context
       const event: Partial<APIGatewayProxyEvent> = {
         httpMethod: 'POST',
-        path: `/chat/v1/sessions/${sessionId}/stream`,
+        path: API_ROUTES.CHAT.SESSION_STREAM.replace(':sessionId', encodeURIComponent(sessionId ?? '')),
         body: JSON.stringify(await c.req.json()),
         requestContext: (c.env.event?.requestContext || {}) as APIGatewayProxyEvent['requestContext'],
       };
@@ -132,9 +129,9 @@ async function registerLocalChatRoutes(config: Partial<Environment>, app: App): 
       const stream = await chatRouter.route(event as APIGatewayProxyEvent);
 
       // Set SSE headers
-      c.header('Content-Type', 'text/event-stream; charset=utf-8');
-      c.header('Cache-Control', 'no-cache');
-      c.header('Connection', 'keep-alive');
+      Object.entries(SSE_HEADERS).forEach(([key, value]) => {
+        c.header(key, value);
+      });
 
       // Stream the response
       const readable = new ReadableStream({
@@ -155,11 +152,7 @@ async function registerLocalChatRoutes(config: Partial<Environment>, app: App): 
       });
 
       return new Response(readable, {
-        headers: {
-          'Content-Type': 'text/event-stream; charset=utf-8',
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-        },
+        headers: SSE_HEADERS,
       });
     } catch (error) {
       logger.error('Session chat stream error', { error });

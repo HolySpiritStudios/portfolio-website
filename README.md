@@ -216,7 +216,7 @@ Frontend (React)              Backend (Lambda)           AI Services
 **API Endpoints:**
 
 - `POST /chat/v1/stream` - Generic chat endpoint
-- `POST /chat/v1/sessions/{sessionId}/stream` - Session-specific chat with context
+- `POST /chat/v1/sessions/:sessionId/stream` - Session-specific chat with context
 
 **Setup:**
 

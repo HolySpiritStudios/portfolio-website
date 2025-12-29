@@ -48,6 +48,7 @@
     "typescript-eslint": "catalog:"
   },
   "dependencies": {
+    "@ws-mono/shared": "workspace:*",
     "@aws-lambda-powertools/commons": "catalog:",
     "@aws-lambda-powertools/logger": "catalog:",
     "@aws-sdk/client-cloudformation": "catalog:",

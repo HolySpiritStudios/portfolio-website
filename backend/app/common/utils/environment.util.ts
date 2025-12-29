@@ -30,6 +30,9 @@ export enum EnvironmentVariable {
 
   // TimeBack
   TIMEBACK_BASE_URL = 'TIMEBACK_BASE_URL',
+
+  // Chat
+  CHAT_MODEL = 'CHAT_MODEL',
 }
 
 const CoreEnvironmentSchema = z.object({
@@ -67,12 +70,17 @@ const TimeBackEnvironmentSchema = z.object({
   [EnvironmentVariable.TIMEBACK_BASE_URL]: z.string().url().optional(),
 });
 
+const ChatEnvironmentSchema = z.object({
+  [EnvironmentVariable.CHAT_MODEL]: z.string().optional(),
+});
+
 const EnvironmentSchema = CoreEnvironmentSchema.merge(AwsEnvironmentSchema)
   .merge(DatabaseEnvironmentSchema)
   .merge(CognitoEnvironmentSchema)
   .merge(SecretsEnvironmentSchema)
   .merge(LtiEnvironmentSchema)
-  .merge(TimeBackEnvironmentSchema);
+  .merge(TimeBackEnvironmentSchema)
+  .merge(ChatEnvironmentSchema);
 
 export type Environment = z.infer<typeof EnvironmentSchema>;
 type EnvironmentKey = keyof Environment;

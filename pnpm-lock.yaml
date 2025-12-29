@@ -257,6 +257,9 @@ importers:
       '@smithy/eventstream-codec':
         specifier: ^4.0.2
         version: 4.0.5
+      '@ws-mono/shared':
+        specifier: workspace:*
+        version: link:../shared
       ai:
         specifier: ^5.0.104
         version: 5.0.116(zod@3.25.76)
@@ -393,6 +396,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.64.2
         version: 5.85.5(react@18.3.1)
+      '@ws-mono/shared':
+        specifier: workspace:*
+        version: link:../shared
       ai:
         specifier: ^5.0.104
         version: 5.0.116(zod@3.25.76)
@@ -589,6 +595,9 @@ importers:
       '@aws-sdk/lib-dynamodb':
         specifier: 'catalog:'
         version: 3.772.0(@aws-sdk/client-dynamodb@3.772.0)
+      '@ws-mono/shared':
+        specifier: workspace:*
+        version: link:../shared
       aws-cdk-lib:
         specifier: 2.230.0
         version: 2.230.0(constructs@10.4.2)
@@ -668,6 +677,8 @@ importers:
       typescript-eslint:
         specifier: 'catalog:'
         version: 8.40.0(eslint@9.23.0(jiti@1.21.7))(typescript@5.8.2)
+
+  shared: {}
 
 packages:
 

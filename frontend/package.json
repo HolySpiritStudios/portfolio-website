@@ -12,6 +12,7 @@
     "fix:lint": "eslint . --fix"
   },
   "dependencies": {
+    "@ws-mono/shared": "workspace:*",
     "@ai-sdk/react": "2.0.104",
     "@reduxjs/toolkit": "^2.5.0",
     "@sentry/react": "^8.50.0",

@@ -1,3 +1,5 @@
+import { SSE_HEADERS } from '@ws-mono/shared';
+
 import type { APIGatewayProxyEvent, APIGatewayProxyEventV2 } from 'aws-lambda';
 import 'reflect-metadata';
 import type { Writable } from 'stream';
@@ -57,13 +59,7 @@ export const handler = awslambda.streamifyResponse(async (event, responseStream)
 
   const httpStream = awslambda.HttpResponseStream.from(responseStream, {
     statusCode: 200,
-    headers: {
-      'Content-Type': 'text/event-stream; charset=utf-8',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': '*',
-    },
+    headers: SSE_HEADERS,
   });
 
   // Handle OPTIONS preflight requests

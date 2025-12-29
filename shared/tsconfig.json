@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
+    "target": "ES2023",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": ["es2022"],
+    "lib": ["es2023"],
     "declaration": true,
     "strict": true,
     "noImplicitAny": true,
@@ -18,9 +18,8 @@
     "inlineSources": true,
     "experimentalDecorators": true,
     "strictPropertyInitialization": false,
-    "typeRoots": ["./node_modules/@types"],
-    "isolatedModules": true
+    "typeRoots": ["../node_modules/@types"],
+    "skipLibCheck": true
   },
-  "include": ["*.ts", "shared/**/*.ts"],
   "exclude": ["node_modules"]
 }

@@ -1,7 +1,7 @@
 import { ChatController } from '../../app/chat/controllers/chat.controller';
 import { MCPServer } from '../../app/chat/models/mcp-server.model';
 import { ChatRouter } from '../../app/chat/routers/chat.router';
-import { ChatService } from '../../app/chat/services/chat.service';
+import { ChatService, DEFAULT_CHAT_MODEL } from '../../app/chat/services/chat.service';
 import { SecretsService } from '../../app/common/integrations/aws/services/secrets.service';
 import { Environment, EnvironmentService, EnvironmentVariable } from '../../app/common/utils/environment.util';
 import { getAppLogger } from '../../app/common/utils/logger.util';
@@ -137,7 +137,7 @@ function parseMCPServers(mcpServersString?: string): MCPServer[] {
  * - Chat works without MCP if not configured (graceful degradation)
  *
  * Model Configuration:
- * - Optional CHAT_MODEL secret to override the default model
+ * - Optional CHAT_MODEL secret or environment variable to override the default model
  * - Defaults to Claude Opus 4.5 if not specified
  * - Example: "global.anthropic.claude-sonnet-4-20250514-v1:0" for cost optimization
  *
@@ -153,6 +153,8 @@ export async function buildChatRouter(config: Partial<Environment> = {}): Promis
   const secrets = await secretsService.getSecret<ChatSecrets>(secretId);
 
   const mcpServers = parseMCPServers(secrets.MCP_SERVERS);
+  const model =
+    environmentService.getOptional(EnvironmentVariable.CHAT_MODEL) || secrets.CHAT_MODEL || DEFAULT_CHAT_MODEL;
 
   // Debug: Log parsed servers (mask API keys for security)
   if (mcpServers.length > 0) {
@@ -175,11 +177,11 @@ export async function buildChatRouter(config: Partial<Environment> = {}): Promis
 
   const chatService = await ChatService.create({
     mcpServers,
-    model: secrets.CHAT_MODEL,
+    model,
   });
 
   const chatController = new ChatController(chatService);
 
-  logger.info('Chat router built successfully', { mcpServerCount: mcpServers.length });
+  logger.info('Chat router built successfully', { mcpServerCount: mcpServers.length, model });
   return new ChatRouter(chatController);
 }

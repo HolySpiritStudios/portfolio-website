@@ -14,7 +14,7 @@ const logger = getAppLogger('chat-service');
 
 // Default model: Claude Opus 4.5 for superior coding capabilities and complex reasoning
 // Using inference profile (global.) for on-demand throughput access
-const DEFAULT_MODEL = 'global.anthropic.claude-opus-4-5-20251101-v1:0';
+export const DEFAULT_CHAT_MODEL = 'global.anthropic.claude-opus-4-5-20251101-v1:0';
 
 export class ChatService {
   private constructor(
@@ -30,7 +30,7 @@ export class ChatService {
    */
   static async create(config: ChatServiceConfig, contextService?: IContextService): Promise<ChatService> {
     const mcpServerCount = config.mcpServers?.length ?? 0;
-    const model = config.model || DEFAULT_MODEL;
+    const model = config.model || DEFAULT_CHAT_MODEL;
     logger.info('Initializing ChatService', { mcpServerCount, hasContext: !!contextService, model });
 
     const allTools: ToolSet = {};
@@ -40,7 +40,8 @@ export class ChatService {
     if (config.mcpServers && config.mcpServers.length > 0) {
       for (let i = 0; i < config.mcpServers.length; i++) {
         const server: MCPServer = config.mcpServers[i];
-        const serverName: string = server.name || `server${i + 1}`;
+        const rawServerName: string = server.name || `server${i + 1}`;
+        const serverName = this.sanitizeName(rawServerName);
 
         try {
           logger.info('Initializing MCP client', { serverName, url: server.url, headerName: server.auth.headerName });
@@ -56,7 +57,7 @@ export class ChatService {
 
           // Namespace tools to prevent conflicts: tool_name -> serverName_tool_name
           for (const [toolName, toolDef] of Object.entries(serverTools as Record<string, unknown>)) {
-            const namespacedName = `${serverName}_${toolName}`;
+            const namespacedName = `${serverName}_${this.sanitizeName(toolName)}`;
             allTools[namespacedName] = toolDef as (typeof allTools)[string];
           }
 
@@ -88,6 +89,13 @@ export class ChatService {
     }
 
     return new ChatService(allTools, model, contextService);
+  }
+
+  /**
+   * Sanitizes a name to be safe for LLM tool naming (alphanumeric and underscores only)
+   */
+  private static sanitizeName(name: string): string {
+    return name.replace(/[^a-zA-Z0-9_]/g, '_').replace(/_+/g, '_');
   }
 
   /**
