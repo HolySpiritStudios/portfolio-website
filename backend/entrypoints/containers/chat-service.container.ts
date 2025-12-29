@@ -40,8 +40,8 @@ interface ChatSecrets {
   /**
    * CHAT_MODEL: Optional Bedrock model ID to use for chat
    * Examples:
-   * - "anthropic.claude-opus-4-5-20251101-v1:0" (default, best for complex reasoning)
-   * - "anthropic.claude-sonnet-4-20250514-v1:0" (faster, more cost-effective)
+   * - "global.anthropic.claude-opus-4-5-20251101-v1:0" (default, best for complex reasoning)
+   * - "global.anthropic.claude-sonnet-4-20250514-v1:0" (faster, more cost-effective)
    * If not specified, defaults to Claude Opus 4.5
    */
   CHAT_MODEL?: string;
@@ -139,7 +139,7 @@ function parseMCPServers(mcpServersString?: string): MCPServer[] {
  * Model Configuration:
  * - Optional CHAT_MODEL secret to override the default model
  * - Defaults to Claude Opus 4.5 if not specified
- * - Example: "anthropic.claude-sonnet-4-20250514-v1:0" for cost optimization
+ * - Example: "global.anthropic.claude-sonnet-4-20250514-v1:0" for cost optimization
  *
  * ContextService is optional - can be injected for domain-specific context
  */

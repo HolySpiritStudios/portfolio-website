@@ -70,7 +70,7 @@ export const handler = awslambda.streamifyResponse(async (event, responseStream)
   // Handle OPTIONS preflight requests
   if (method === 'OPTIONS') {
     logger.info('Handling OPTIONS preflight request');
-    httpStream.write('data: OK\\n\\n');
+    httpStream.write('data: OK\n\n');
     httpStream.end();
     return;
   }
@@ -83,7 +83,7 @@ export const handler = awslambda.streamifyResponse(async (event, responseStream)
 
     // Stream AI responses as Server-Sent Events
     for await (const chunk of stream.toUIMessageStream()) {
-      httpStream.write(`data: ${JSON.stringify(chunk)}\\n\\n`);
+      httpStream.write(`data: ${JSON.stringify(chunk)}\n\n`);
     }
 
     logger.info('SSE stream completed successfully');
@@ -93,7 +93,7 @@ export const handler = awslambda.streamifyResponse(async (event, responseStream)
     const message = error instanceof Error ? error.message : 'Unknown error';
 
     // Send error as SSE event
-    httpStream.write(`data: ${JSON.stringify({ type: 'error', errorText: message })}\\n\\n`);
+    httpStream.write(`data: ${JSON.stringify({ type: 'error', errorText: message })}\n\n`);
     httpStream.end();
   }
 });

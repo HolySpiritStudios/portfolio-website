@@ -14,7 +14,7 @@ const logger = getAppLogger('chat-service');
 
 // Default model: Claude Opus 4.5 for superior coding capabilities and complex reasoning
 // Using inference profile (global.) for on-demand throughput access
-const DEFAULT_MODEL = 'global.anthropic.claude-opus-4-5-v1:0';
+const DEFAULT_MODEL = 'global.anthropic.claude-opus-4-5-20251101-v1:0';
 
 export class ChatService {
   private constructor(

@@ -225,7 +225,7 @@ Frontend (React)              Backend (Lambda)           AI Services
 ```json
 {
   "MCP_SERVERS": "[{\"name\":\"shortio\",\"url\":\"https://ai-assistant.short.io/mcp\",\"auth\":{\"headerName\":\"authorization\",\"value\":\"your-api-key\"}}]",
-  "CHAT_MODEL": "anthropic.claude-sonnet-4-20250514-v1:0"
+  "CHAT_MODEL": "global.anthropic.claude-opus-4-5-20251101-v1:0"
 }
 ```
 
