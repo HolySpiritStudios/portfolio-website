@@ -46,7 +46,7 @@ Add multiple MCP servers using a JSON array in AWS Secrets Manager. Tools are au
 # Get current secret
 aws secretsmanager get-secret-value \
   --secret-id ws-mono-st/backend/integration/secrets \
-  --profile wseng \
+  --profile aws_profile_in_dotenv \
   --query SecretString | jq '.' > secret.json
 
 # Add MCP_SERVERS key (edit secret.json)
@@ -58,65 +58,15 @@ aws secretsmanager get-secret-value \
 # Update secret
 aws secretsmanager put-secret-value \
   --secret-id ws-mono-st/backend/integration/secrets \
-  --profile wseng \
+  --profile aws_profile_in_dotenv \
   --secret-string file://secret.json && rm secret.json
 ```
 
 **Common Header Formats:**
 - Short.io: `"headerName": "authorization", "value": "sk_30JRJu4gZFAdyKtO"`
 - GitHub-style: `"headerName": "authorization", "value": "Bearer ghp_xxx"`
-- API Gateway: `"headerName": "x-api-key", "value": "abc123"`
+- API Gateway with API Key: `"headerName": "x-api-key", "value": "abc123"`
 
-### 2. Deploy
-
-```bash
-cd infra && ENVIRONMENT=integration pnpm cdk:deploy
-```
-
-### 3. Verify
-
-```bash
-aws logs tail /aws/lambda/ws-mono-st-integration-chat-api-handler \
-  --profile wseng \
-  --follow | grep MCP
-```
-
-Expected:
-```
-[INFO] Initializing MCP client { serverName: 'shortio', url: '...' }
-[INFO] MCP client initialized successfully { serverName: 'shortio', toolCount: 3 }
-[INFO] All MCP servers initialized { clientCount: 2, totalToolCount: 8, namespacedToolCount: 8 }
-```
-
-## Tool Namespacing
-
-**Problem:** Multiple servers may have tools with the same name.
-
-**Solution:** Tools are automatically namespaced by server name.
-
-**Example with explicit names:**
-```json
-[
-  {"name": "shortio", "url": "https://api1.com/mcp", "auth": {...}},
-  {"name": "custom", "url": "https://api2.com/mcp", "auth": {...}}
-]
-```
-
-Server "shortio" has tool "create_link" → Becomes: "shortio_create_link"
-Server "custom" has tool "create_link" → Becomes: "custom_create_link"
-
-Both coexist without conflict!
-
-**Without names** (auto-assigned):
-```json
-[
-  {"url": "https://api1.com/mcp", "auth": {...}},
-  {"url": "https://api2.com/mcp", "auth": {...}}
-]
-```
-
-Server 1 tools: server1_tool_name
-Server 2 tools: server2_tool_name
 ## Removing MCP Servers
 
 To remove an MCP server from the configuration:
