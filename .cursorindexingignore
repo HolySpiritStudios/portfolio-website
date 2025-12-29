@@ -11,3 +11,4 @@ build
 cdk.out
 .aider.chat.history.md
 !.cursor/rules
+!.env*
