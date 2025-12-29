@@ -32,6 +32,7 @@ export class RoutesService {
       },
       tags: [
         { name: 'Authentication', description: 'User authentication and authorization endpoints' },
+        { name: 'Chat', description: 'AI chat streaming endpoints (handled by Lambda streaming)' },
         { name: 'HelloWorld', description: 'Hello World endpoints' },
       ],
       servers: [{ url: apiBaseUrl }],

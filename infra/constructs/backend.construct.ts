@@ -7,6 +7,7 @@ import {
   IResource,
   IRestApi,
   LambdaIntegration,
+  ResponseTransferMode,
   RestApi,
 } from 'aws-cdk-lib/aws-apigateway';
 import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
@@ -33,7 +34,7 @@ import {
   ServicePrincipal,
 } from 'aws-cdk-lib/aws-iam';
 import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
-import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { ARecord, HostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { ApiGateway } from 'aws-cdk-lib/aws-route53-targets';
@@ -50,6 +51,11 @@ const CORS_OPTIONS: CorsOptions = {
   allowHeaders: [...Cors.DEFAULT_HEADERS, 'Authorization', 'Content-Type'],
   allowCredentials: true,
 };
+
+interface AddMethodProxyOptions {
+  authType?: 'cognito' | 'iam' | 'none';
+  responseTransferMode?: ResponseTransferMode;
+}
 
 export interface BackendConstructProps {
   environment: string;
@@ -295,7 +301,11 @@ export class BackendConstruct extends Construct {
     };
   }
 
-  private createLambdaFunction(props: BackendConstructProps, entryPath: string): NodejsFunction {
+  private createLambdaFunction(
+    props: BackendConstructProps,
+    entryPath: string,
+    overrides: Partial<NodejsFunctionProps> = {},
+  ): NodejsFunction {
     const name = entryPath.split('.')[0];
     const functionName = getResourceName(props.environment, name);
 
@@ -311,41 +321,12 @@ export class BackendConstruct extends Construct {
       bundling: {
         minify: isProduction(props.environment),
         sourceMap: !isProduction(props.environment),
-      },
-      logRetention: isProduction(props.environment) ? RetentionDays.ONE_YEAR : RetentionDays.TWO_WEEKS,
-      description: `Backend API handler for ${props.environment} environment`,
-    });
-
-    return lambda;
-  }
-
-  /**
-   * Create Lambda function optimized for streaming responses
-   * Used for chat/SSE endpoints that require longer timeouts and more memory
-   */
-  private createStreamingLambdaFunction(props: BackendConstructProps, entryPath: string): NodejsFunction {
-    const name = entryPath.split('.')[0];
-    const functionName = getResourceName(props.environment, name);
-
-    const lambda = new NodejsFunction(this, name + 'Lambda', {
-      functionName,
-      entry: getLambdaPath(entryPath),
-      runtime: Runtime.NODEJS_22_X,
-      architecture: Architecture.ARM_64,
-      timeout: Duration.seconds(600), // Longer timeout for streaming
-      memorySize: 2048, // More memory for AI SDK and streaming
-      environment: this.getLambdaEnvVars(props),
-      role: this.lambdaRole,
-      bundling: {
-        minify: isProduction(props.environment),
-        sourceMap: !isProduction(props.environment),
-        // Critical for AI SDK with Bedrock streaming: bundle ALL dependencies including AWS SDK
-        // This ensures @smithy/eventstream-codec and related packages are included
         bundleAwsSDK: true,
         externalModules: [],
       },
       logRetention: isProduction(props.environment) ? RetentionDays.ONE_YEAR : RetentionDays.TWO_WEEKS,
-      description: `Streaming chat handler for ${props.environment} environment`,
+      description: `Backend API handler for ${props.environment} environment`,
+      ...overrides,
     });
 
     return lambda;
@@ -402,43 +383,36 @@ export class BackendConstruct extends Construct {
 
     const authenticationLambda = this.createLambdaFunction(props, 'authentication-api-handler.lambda.ts');
     const authenticationResource = this.api.root.addResource('authentication').addResource('v1').addProxy();
-    this.addAllMethodProxy(authenticationResource, authenticationLambda, false);
+    this.addAllMethodProxy(authenticationResource, authenticationLambda, { authType: 'none' });
 
     const helloWorldLambda = this.createLambdaFunction(props, 'hello-world-api-handler.lambda.ts');
     const helloWorldResource = this.api.root.addResource('hello-world').addResource('v1').addProxy();
-    this.addAllMethodProxy(helloWorldResource, helloWorldLambda, true);
+    this.addAllMethodProxy(helloWorldResource, helloWorldLambda, { authType: 'cognito' });
 
     const docsLambda = this.createLambdaFunction(props, 'docs-api-handler.lambda.ts');
     const docsResource = this.api.root.addResource('docs').addProxy();
-    this.addAllMethodProxy(docsResource, docsLambda, false);
+    this.addAllMethodProxy(docsResource, docsLambda, { authType: 'none' });
 
     // Chat streaming routes (uses direct Lambda response streaming, not Hono)
-    const chatLambda = this.createStreamingLambdaFunction(props, 'chat-api-handler.lambda.ts');
-    const chatResource = this.api.root.addResource('chat').addResource('v1');
-
-    // Generic chat endpoint: POST /chat/v1/stream
-    const genericStreamResource = chatResource.addResource('stream');
-    genericStreamResource.addCorsPreflight(CORS_OPTIONS);
-    this.addStreamingMethod(genericStreamResource, chatLambda, true);
-
-    // Session-specific chat endpoint: POST /chat/v1/sessions/{sessionId}/stream
-    const sessionsResource = chatResource.addResource('sessions');
-    const sessionResource = sessionsResource.addResource('{sessionId}');
-    const sessionStreamResource = sessionResource.addResource('stream');
-    sessionStreamResource.addCorsPreflight(CORS_OPTIONS);
-    this.addStreamingMethod(sessionStreamResource, chatLambda, true);
+    const chatLambda = this.createLambdaFunction(props, 'chat-api-handler.lambda.ts', { timeout: Duration.minutes(5) });
+    const chatResource = this.api.root.addResource('chat').addResource('v1').addProxy();
+    this.addAllMethodProxy(chatResource, chatLambda, { responseTransferMode: ResponseTransferMode.STREAM });
   }
 
-  private addAllMethodProxy(resource: IResource, lambda: NodejsFunction, authenticated = true): void {
+  private addAllMethodProxy(resource: IResource, lambda: NodejsFunction, options: AddMethodProxyOptions = {}): void {
+    const { authType = 'cognito', responseTransferMode } = options;
+    const timeout = responseTransferMode === ResponseTransferMode.STREAM ? Duration.minutes(5) : undefined;
     ['GET', 'POST', 'PUT', 'DELETE'].forEach((method) => {
       resource.addMethod(
         method,
         new LambdaIntegration(lambda, {
           proxy: true,
           allowTestInvoke: true,
+          responseTransferMode,
+          timeout,
         }),
         {
-          authorizer: authenticated ? this.authorizer : undefined,
+          authorizer: authType === 'cognito' ? this.authorizer : undefined,
         },
       );
     });
@@ -449,24 +423,6 @@ export class BackendConstruct extends Construct {
         proxy: true,
         allowTestInvoke: true,
       }),
-    );
-  }
-
-  /**
-   * Add POST and OPTIONS methods for streaming endpoints
-   * Used for SSE/streaming responses that only support POST
-   */
-  private addStreamingMethod(resource: IResource, lambda: NodejsFunction, authenticated = true): void {
-    // POST for streaming chat messages
-    resource.addMethod(
-      'POST',
-      new LambdaIntegration(lambda, {
-        proxy: true,
-        allowTestInvoke: true,
-      }),
-      {
-        authorizer: authenticated ? this.authorizer : undefined,
-      },
     );
   }
 

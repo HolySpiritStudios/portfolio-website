@@ -67,6 +67,14 @@ export const handler = awslambda.streamifyResponse(async (event, responseStream)
     },
   });
 
+  // Handle OPTIONS preflight requests
+  if (method === 'OPTIONS') {
+    logger.info('Handling OPTIONS preflight request');
+    httpStream.write('data: OK\\n\\n');
+    httpStream.end();
+    return;
+  }
+
   try {
     const router = await getRouter();
     const stream = await router.route(event);

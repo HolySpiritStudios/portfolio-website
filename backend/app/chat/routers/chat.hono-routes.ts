@@ -3,6 +3,7 @@ import { createRoute } from '@hono/zod-openapi';
 import { z } from 'zod';
 
 import type { App } from '../../common/utils/routes.util';
+import { errorResponses } from '../../common/utils/routes.util';
 import { ChatStreamRequestSchema, chatStreamResponseSchema } from '../models/chat-stream.model';
 
 /**
@@ -32,15 +33,11 @@ export const streamChatRoute = createRoute({
       content: {
         'text/event-stream': {
           schema: chatStreamResponseSchema,
+          example: 'data: {"type":"text-delta","content":"Hello"}\n\ndata: {"type":"finish"}\n\n',
         },
       },
     },
-    400: {
-      description: 'Invalid request body',
-    },
-    401: {
-      description: 'Unauthorized - missing or invalid authentication',
-    },
+    ...errorResponses,
   },
 });
 
@@ -74,17 +71,16 @@ export const streamSessionChatRoute = createRoute({
       content: {
         'text/event-stream': {
           schema: chatStreamResponseSchema,
+          example: 'data: {"type":"text-delta","content":"Based on your session"}\n\ndata: {"type":"finish"}\n\n',
         },
       },
     },
-    400: {
-      description: 'Invalid request body',
-    },
-    401: {
-      description: 'Unauthorized - missing or invalid authentication',
-    },
+    ...errorResponses,
     404: {
       description: 'Session not found',
+      content: {
+        'application/json': { schema: z.object({ message: z.string() }) },
+      },
     },
   },
 });
