@@ -178,6 +178,7 @@ export async function buildChatRouter(config: Partial<Environment> = {}): Promis
   const chatService = await ChatService.create({
     mcpServers,
     model,
+    isProduction: environmentService.isProduction(),
   });
 
   const chatController = new ChatController(chatService);
