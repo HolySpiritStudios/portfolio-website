@@ -1,5 +1,7 @@
+import { waitUntilStackExists } from '@aws-sdk/client-cloudformation';
+
 import { config as dotenvConfig } from 'dotenv';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'fs';
 import path from 'node:path';
 
 import { getResourceName } from '../constants/app.constant';
@@ -27,6 +29,25 @@ function loadDotEnvFile(dotenvPath: string): string[] {
 function saveDotEnvFile(dotenvPath: string, lines: string[]): void {
   const normalized = lines.join('\n');
   writeFileSync(dotenvPath, normalized.endsWith('\n') ? normalized : normalized + '\n', 'utf8');
+}
+
+function writeToGitHubActions(entries: Record<string, string>): void {
+  const githubEnv = process.env.GITHUB_ENV;
+  const githubOutput = process.env.GITHUB_OUTPUT;
+
+  const filteredEntries = Object.entries(entries).filter(([key]) => !EXCLUDED_ENV_VARS.has(key));
+
+  if (githubEnv && existsSync(githubEnv)) {
+    const content = filteredEntries.map(([key, value]) => `${key}=${value}`).join('\n');
+    appendFileSync(githubEnv, content + '\n', 'utf8');
+    logger.info('Wrote variables to GITHUB_ENV');
+  }
+
+  if (githubOutput && existsSync(githubOutput)) {
+    const content = filteredEntries.map(([key, value]) => `${key}=${value}`).join('\n');
+    appendFileSync(githubOutput, content + '\n', 'utf8');
+    logger.info('Wrote variables to GITHUB_OUTPUT');
+  }
 }
 
 function upsertEnvLines(lines: string[], entries: Record<string, string>): string[] {
@@ -74,9 +95,29 @@ function upsertEnvLines(lines: string[], entries: Record<string, string>): strin
   return lines;
 }
 
-async function appendLambdaEnvToDotEnv(env: string): Promise<void> {
+async function appendLambdaEnvToDotEnv(env: string, waitMinutes?: number): Promise<void> {
   const cloudFormation = new CloudFormationService();
   const stackName = getResourceName(env, 'stack');
+
+  if (waitMinutes !== undefined) {
+    const maxWaitTime = waitMinutes * 60;
+    logger.info(`Waiting for stack ${stackName} to exist (up to ${waitMinutes} minutes)...`);
+    try {
+      await waitUntilStackExists(
+        {
+          client: cloudFormation.getClient(),
+          maxWaitTime,
+          minDelay: 5,
+          maxDelay: 30,
+        },
+        { StackName: stackName },
+      );
+      logger.info(`Stack ${stackName} exists.`);
+    } catch (error) {
+      logger.error(`Stack ${stackName} did not appear within ${waitMinutes} minutes.`, { error });
+      throw error;
+    }
+  }
 
   const extraKeys = Array.from(OUTPUTS_TO_ENV_VARS.keys());
   const outputs = await cloudFormation.getOutputsByKey(stackName, ['LambdaEnvVars', ...extraKeys]);
@@ -124,12 +165,15 @@ async function appendLambdaEnvToDotEnv(env: string): Promise<void> {
   parsed.ENVIRONMENT = env;
   parsed.VITE_ENVIRONMENT = env;
 
+  // Write to .env
   const dotenvPath = path.resolve(__dirname, '../../.env');
   const lines = loadDotEnvFile(dotenvPath);
   const updated = upsertEnvLines(lines, parsed);
   saveDotEnvFile(dotenvPath, updated);
-
   logger.info('✅ .env updated from LambdaEnvVars');
+
+  // Write to GitHub Actions
+  writeToGitHubActions(parsed);
 }
 
 function getEnv(args: Record<string, string>): string {
@@ -141,6 +185,21 @@ function getEnv(args: Record<string, string>): string {
 
 export async function run(args: Record<string, string>): Promise<void> {
   const env = getEnv(args);
-  await appendLambdaEnvToDotEnv(env);
+  let waitMinutes: number | undefined;
+  const defaultWaitMinutes = 30;
+
+  if ('wait' in args) {
+    const waitValue = args.wait;
+    if (!waitValue) {
+      waitMinutes = defaultWaitMinutes;
+    } else {
+      waitMinutes = parseInt(waitValue, 10);
+      if (isNaN(waitMinutes)) {
+        waitMinutes = defaultWaitMinutes;
+      }
+    }
+  }
+
+  await appendLambdaEnvToDotEnv(env, waitMinutes);
   logger.info('✅ Update env script succeeded');
 }

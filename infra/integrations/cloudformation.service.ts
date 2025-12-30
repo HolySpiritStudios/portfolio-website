@@ -13,6 +13,10 @@ export class CloudFormationService {
     return Object.fromEntries(outputs?.map((output) => [output.OutputKey, output.OutputValue]) || []);
   }
 
+  getClient(): CloudFormation {
+    return this.cloudFormation;
+  }
+
   private async getStack(stackName: string): Promise<Stack> {
     const response = await this.cloudFormation.describeStacks({ StackName: stackName });
     const stack = response.Stacks?.[0];
