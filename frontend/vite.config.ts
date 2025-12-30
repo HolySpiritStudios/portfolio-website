@@ -29,6 +29,8 @@ export default defineConfig(({ mode }) => {
       ),
       'import.meta.env.VITE_USER_POOL_DOMAIN': JSON.stringify(env.USER_POOL_DOMAIN || env.VITE_USER_POOL_DOMAIN),
       'import.meta.env.VITE_ENVIRONMENT': JSON.stringify(env.ENVIRONMENT || env.VITE_ENVIRONMENT || 'localhost'),
+      'import.meta.env.VITE_MIXPANEL_TOKEN': JSON.stringify(env.MIXPANEL_TOKEN || env.VITE_MIXPANEL_TOKEN),
+      'import.meta.env.VITE_SENTRY_DSN': JSON.stringify(env.SENTRY_DSN || env.VITE_SENTRY_DSN),
     },
   };
 });

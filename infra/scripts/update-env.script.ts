@@ -149,10 +149,6 @@ async function appendLambdaEnvToDotEnv(env: string, waitMinutes?: number): Promi
     if (secrets) {
       const whitelistedSecrets = Object.entries(secrets)
         .filter(([key]) => WHITELISTED_SECRET_KEYS.has(key))
-        .flatMap(([key, value]) => [
-          [key, value],
-          ['VITE_' + key, value],
-        ])
         .reduce((acc, [key, value]) => ({ ...acc, [key]: value }), {});
 
       Object.assign(parsed, whitelistedSecrets);
@@ -163,7 +159,6 @@ async function appendLambdaEnvToDotEnv(env: string, waitMinutes?: number): Promi
   }
 
   parsed.ENVIRONMENT = env;
-  parsed.VITE_ENVIRONMENT = env;
 
   // Write to .env
   const dotenvPath = path.resolve(__dirname, '../../.env');
