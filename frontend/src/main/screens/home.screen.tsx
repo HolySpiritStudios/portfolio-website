@@ -1,9 +1,18 @@
+import { useNavigate } from 'react-router';
+
+import { CommonButton } from '../../common/components/common-button';
 import { ThemeSwitcher } from '../../common/components/theme-switcher.component';
 import { selectCurrentUser } from '../../user-management/selectors/user-authentication-status.selector';
+import { PathEnum } from '../constants/path.constant';
 import { useAppSelector } from '../hooks/use-app-selector';
 
 export const HomeScreen = () => {
   const user = useAppSelector(selectCurrentUser);
+  const navigate = useNavigate();
+
+  const handleOpenChat = () => {
+    navigate(PathEnum.CHAT);
+  };
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -27,6 +36,13 @@ export const HomeScreen = () => {
           <p className="mt-4 text-muted-foreground">
             This is your starter application home screen. Customize it to fit your needs.
           </p>
+
+          {/* Chat Button */}
+          <div className="mt-6">
+            <CommonButton onClick={handleOpenChat} variant="primary" size="lg">
+              Open Chat
+            </CommonButton>
+          </div>
 
           {/* Theme Demo Section */}
           <div className="mt-8 p-6 bg-muted rounded-lg border border-border">

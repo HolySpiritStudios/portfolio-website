@@ -4,6 +4,7 @@ import { EnvironmentVariable } from '../../../../main/constants/environment-vari
 import { ThunkApiConfigType } from '../../../../main/store/main.store.ts';
 import { getAwsAuthUtil } from '../../../../main/utils/aws/aws-auth.util.ts';
 import { getAwsConfigUtil } from '../../../../main/utils/aws/aws-config.util.ts';
+import { initializeChatClient } from '../../../../main/utils/clients/chat-client.util.ts';
 import { getRestClientUtil } from '../../../../main/utils/clients/rest-client.util.ts';
 import { getLocaleUtil } from '../../../../main/utils/locale.util.ts';
 import { getToasterUtil } from '../../../../main/utils/toaster.util.ts';
@@ -20,7 +21,7 @@ export const rehydrateConfigThunk = createAsyncThunk<void, void, ThunkApiConfigT
     const isConfigAvailable = selectEnvironmentConfigAvailability(getState());
     const setEnvParam = getUrlUtil().getQueryParams(window.location.href)?.setEnv;
 
-    if (!isConfigAvailable || setEnvParam || EnvironmentVariable.FORCED_API_URL) {
+    if (!isConfigAvailable || setEnvParam) {
       await dispatch(selectConfigThunk({ environmentName: setEnvParam ?? EnvironmentVariable.ENVIRONMENT })).unwrap();
       return;
     }
@@ -32,6 +33,7 @@ export const rehydrateConfigThunk = createAsyncThunk<void, void, ThunkApiConfigT
 
     getAwsConfigUtil().configureAws(config);
     getRestClientUtil().initialize(config);
+    initializeChatClient(config.apiUrl);
 
     const url = new URL(window.location.href);
     try {

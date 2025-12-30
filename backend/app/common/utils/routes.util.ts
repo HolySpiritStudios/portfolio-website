@@ -32,6 +32,7 @@ export class RoutesService {
       },
       tags: [
         { name: 'Authentication', description: 'User authentication and authorization endpoints' },
+        { name: 'Chat', description: 'AI chat streaming endpoints (handled by Lambda streaming)' },
         { name: 'HelloWorld', description: 'Hello World endpoints' },
       ],
       servers: [{ url: apiBaseUrl }],
@@ -174,3 +175,12 @@ export const jsonBody = <T extends z.ZodTypeAny>(schema: T) => ({
     'application/json': { schema },
   },
 });
+
+/**
+ * Converts a Hono-style route (e.g. /sessions/:sessionId/stream) to a regex pattern
+ * used for suffix matching in the Lambda handler.
+ */
+export function routeToPattern(route: string): RegExp {
+  const pattern = route.replace(/:[a-zA-Z0-9_]+/g, '([^/]+)') + '$';
+  return new RegExp(pattern);
+}

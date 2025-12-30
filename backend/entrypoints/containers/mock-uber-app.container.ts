@@ -1,5 +1,6 @@
 import { MockAuthenticationController } from '../../app/authentication/controllers/mock-authentication.controller';
 import { AuthenticationRouter } from '../../app/authentication/routers/authentication.router';
+import { registerChatRoutes } from '../../app/chat/routers/chat.hono-routes';
 import { DocsRouter } from '../../app/common/routers/docs.router';
 import { Environment, EnvironmentService } from '../../app/common/utils/environment.util';
 import { type App, RoutesService } from '../../app/common/utils/routes.util';
@@ -14,6 +15,11 @@ export async function buildMockUberApp(config: Partial<Environment> = {}): Promi
 
   new AuthenticationRouter(new MockAuthenticationController(), app);
   new HelloWorldRouter(new MockHelloWorldController(), app);
+
+  // Register chat routes for OpenAPI documentation
+  // Note: These routes are NOT handled by Hono - they're handled by chat-api-handler.lambda.ts
+  registerChatRoutes(app);
+
   await DocsRouter.create(environmentService, routesService, app);
 
   return Promise.resolve(app);

@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+Use the `.env` file to determine the AWS profile, region and account ID to use for all AWS CLI commands in this project.

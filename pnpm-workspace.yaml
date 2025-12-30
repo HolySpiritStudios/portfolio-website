@@ -3,6 +3,7 @@ packages:
   - 'backend'
   - 'infra'
   - 'scripts'
+  - 'shared'
 
 catalog:
   '@aws-lambda-powertools/commons': '2.16.0'

@@ -1,0 +1,127 @@
+---
+description: Tutorial: Integrating MCP Servers
+alwaysApply: false
+---
+# Tutorial: Integrating MCP Servers
+
+## Quick Start
+
+Add multiple MCP servers using a JSON array in AWS Secrets Manager. Tools are automatically namespaced by server name to prevent conflicts.
+
+### 1. Add Secret
+
+**Format:** JSON array of objects with `name`, `url`, and `auth` properties:
+
+```json
+[
+  {
+    "name": "shortio",
+    "url": "https://ai-assistant.short.io/mcp",
+    "auth": {
+      "headerName": "authorization",
+      "value": "sk_xxx"
+    }
+  },
+  {
+    "name": "github",
+    "url": "https://api2.com/mcp",
+    "auth": {
+      "headerName": "x-api-key",
+      "value": "Bearer ghp_xxx"
+    }
+  }
+]
+```
+
+**Property Details:**
+- **name** (optional): Server name for tool namespacing. Defaults to `server1`, `server2`, etc. if omitted
+- **url** (required): MCP server endpoint URL
+- **auth** (required): Object with authentication details
+  - **headerName** (required): HTTP header name (e.g., `authorization`, `x-api-key`)
+  - **value** (required): API key or token value
+
+**Update Secret:**
+
+```bash
+# Get current secret
+aws secretsmanager get-secret-value \
+  --secret-id ws-mono-st/backend/integration/secrets \
+  --profile aws_profile_in_dotenv \
+  --query SecretString | jq '.' > secret.json
+
+# Add MCP_SERVERS key (edit secret.json)
+{
+  "MCP_SERVERS": "[{\"name\":\"shortio\",\"url\":\"https://ai-assistant.short.io/mcp\",\"auth\":{\"headerName\":\"authorization\",\"value\":\"sk_xxx\"}}]",
+  ...existing keys...
+}
+
+# Update secret
+aws secretsmanager put-secret-value \
+  --secret-id ws-mono-st/backend/integration/secrets \
+  --profile aws_profile_in_dotenv \
+  --secret-string file://secret.json && rm secret.json
+```
+
+**Common Header Formats:**
+- Short.io: `"headerName": "authorization", "value": "sk_30JRJu4gZFAdyKtO"`
+- GitHub-style: `"headerName": "authorization", "value": "Bearer ghp_xxx"`
+- API Gateway with API Key: `"headerName": "x-api-key", "value": "abc123"`
+
+## Removing MCP Servers
+
+To remove an MCP server from the configuration:
+
+1. Edit the `MCP_SERVERS` secret in AWS Secrets Manager
+2. Remove the server object from the JSON array
+3. When setting up be sure to remove the short.io server from the configuration.
+
+## Architecture
+
+```
+Container → Parse JSON array → ChatService → Initialize each server
+                                          → Use specified auth header
+                                          → Namespace tools
+                                          → Merge into single ToolSet
+                                          → Pass to AI model
+```
+
+**Key Features:**
+- ✅ Unlimited MCP servers (JSON array)
+- ✅ Self-documenting JSON format with named properties
+- ✅ Flexible auth headers (`authorization`, `x-api-key`, custom)
+- ✅ Tool namespacing prevents conflicts
+- ✅ Graceful per-server error handling
+- ✅ Optional or auto-assigned server names
+- ✅ Single ToolSet passed to AI model
+
+## Troubleshooting
+
+### No tools loaded
+- Check JSON format is valid (use a JSON validator)
+- Verify `MCP_SERVERS` is a properly escaped JSON string in the secret
+- Check required fields: `url`, `auth.headerName`, `auth.value`
+- Verify URL is HTTPS
+- Check API key validity
+
+### JSON parsing errors
+- Ensure the JSON is properly escaped when stored in AWS Secrets Manager
+- Use double quotes for all strings in JSON
+- Validate JSON structure matches the format above
+
+### Authentication errors (401/403)
+- Verify `auth.headerName` matches server's expected format
+- Check if API key needs "Bearer " prefix in `auth.value`
+- Confirm API key is valid and not expired
+
+### Tool name collisions (shouldn't happen)
+- Tools are auto-namespaced by server name
+- If you see collisions, check logs for duplicate server names
+
+### Some servers fail
+- Check logs for specific server errors
+- Other servers continue working (graceful degradation)
+
+## Related
+
+- [Backend Architecture](../definitions/backend-architecture.mdc)
+- [Adding a New Module](./adding-new-module.mdc)

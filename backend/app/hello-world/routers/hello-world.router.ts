@@ -1,4 +1,5 @@
 import { createRoute } from '@hono/zod-openapi';
+import { API_ROUTES } from '@ws-mono/shared/constants/api-routes.constant';
 
 import type { APIGatewayProxyEvent, APIGatewayProxyEventV2 } from 'aws-lambda';
 import { LambdaEvent, handle } from 'hono/aws-lambda';
@@ -13,22 +14,17 @@ export class HelloWorldRouter {
   constructor(
     private readonly controller: IHelloWorldController,
     private readonly app: App,
-    private readonly basePath = '/hello-world/v1',
   ) {
     this.setupGetHelloWorld();
 
     this.handler = handle(this.app);
   }
 
-  private prefixed(path: string): string {
-    return `${this.basePath}${path}`;
-  }
-
   private setupGetHelloWorld() {
     this.app.openapi(
       createRoute({
         method: 'get',
-        path: this.prefixed('/'),
+        path: API_ROUTES.HELLO_WORLD.HELLO,
         tags: ['HelloWorld'],
         summary: 'Get hello world message',
         description: 'Returns a simple hello world message with timestamp',

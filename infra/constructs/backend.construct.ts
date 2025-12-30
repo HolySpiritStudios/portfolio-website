@@ -1,5 +1,8 @@
+import { SSE_HEADERS } from '@ws-mono/shared/constants/sse-headers.constant';
+
 import { CfnOutput, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import {
+  AuthorizationType,
   CognitoUserPoolsAuthorizer,
   Cors,
   CorsOptions,
@@ -7,6 +10,7 @@ import {
   IResource,
   IRestApi,
   LambdaIntegration,
+  ResponseTransferMode,
   RestApi,
 } from 'aws-cdk-lib/aws-apigateway';
 import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
@@ -33,7 +37,7 @@ import {
   ServicePrincipal,
 } from 'aws-cdk-lib/aws-iam';
 import { Architecture, Runtime } from 'aws-cdk-lib/aws-lambda';
-import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
+import { NodejsFunction, NodejsFunctionProps } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { ARecord, HostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { ApiGateway } from 'aws-cdk-lib/aws-route53-targets';
@@ -47,9 +51,14 @@ import { getLambdaPath } from '../utils/directory.util';
 const CORS_OPTIONS: CorsOptions = {
   allowOrigins: Cors.ALL_ORIGINS,
   allowMethods: Cors.ALL_METHODS,
-  allowHeaders: Cors.DEFAULT_HEADERS,
+  allowHeaders: [...Cors.DEFAULT_HEADERS, 'Authorization', 'Content-Type', ...Object.keys(SSE_HEADERS)],
   allowCredentials: true,
 };
+
+interface AddMethodProxyOptions {
+  authType?: 'cognito' | 'iam' | 'none';
+  responseTransferMode?: ResponseTransferMode;
+}
 
 export interface BackendConstructProps {
   environment: string;
@@ -146,6 +155,14 @@ export class BackendConstruct extends Construct {
           'cognito-idp:AdminConfirmSignUp',
           'cognito-idp:AdminLinkProviderForUser',
         ],
+        resources: ['*'],
+      }),
+    );
+
+    // Add Bedrock permissions for AI chat functionality
+    role.addToPolicy(
+      new PolicyStatement({
+        actions: ['bedrock:InvokeModel', 'bedrock:InvokeModelWithResponseStream'],
         resources: ['*'],
       }),
     );
@@ -287,7 +304,11 @@ export class BackendConstruct extends Construct {
     };
   }
 
-  private createLambdaFunction(props: BackendConstructProps, entryPath: string): NodejsFunction {
+  private createLambdaFunction(
+    props: BackendConstructProps,
+    entryPath: string,
+    overrides: Partial<NodejsFunctionProps> = {},
+  ): NodejsFunction {
     const name = entryPath.split('.')[0];
     const functionName = getResourceName(props.environment, name);
 
@@ -303,9 +324,12 @@ export class BackendConstruct extends Construct {
       bundling: {
         minify: isProduction(props.environment),
         sourceMap: !isProduction(props.environment),
+        bundleAwsSDK: true,
+        externalModules: [],
       },
       logRetention: isProduction(props.environment) ? RetentionDays.ONE_YEAR : RetentionDays.TWO_WEEKS,
       description: `Backend API handler for ${props.environment} environment`,
+      ...overrides,
     });
 
     return lambda;
@@ -362,27 +386,43 @@ export class BackendConstruct extends Construct {
 
     const authenticationLambda = this.createLambdaFunction(props, 'authentication-api-handler.lambda.ts');
     const authenticationResource = this.api.root.addResource('authentication').addResource('v1').addProxy();
-    this.addAllMethodProxy(authenticationResource, authenticationLambda, false);
+    this.addAllMethodProxy(authenticationResource, authenticationLambda, { authType: 'none' });
 
     const helloWorldLambda = this.createLambdaFunction(props, 'hello-world-api-handler.lambda.ts');
     const helloWorldResource = this.api.root.addResource('hello-world').addResource('v1').addProxy();
-    this.addAllMethodProxy(helloWorldResource, helloWorldLambda, true);
+    this.addAllMethodProxy(helloWorldResource, helloWorldLambda, { authType: 'cognito' });
 
     const docsLambda = this.createLambdaFunction(props, 'docs-api-handler.lambda.ts');
     const docsResource = this.api.root.addResource('docs').addProxy();
-    this.addAllMethodProxy(docsResource, docsLambda, false);
+    this.addAllMethodProxy(docsResource, docsLambda, { authType: 'none' });
+
+    // Chat streaming routes (uses direct Lambda response streaming, not Hono)
+    // Response streaming is enabled by:
+    // 1. Using awslambda.streamifyResponse() in the Lambda handler
+    // 2. Setting ResponseTransferMode.STREAM in the API Gateway integration
+    const chatLambda = this.createLambdaFunction(props, 'chat-api-handler.lambda.ts', {
+      timeout: Duration.minutes(5),
+    });
+
+    const chatResource = this.api.root.addResource('chat').addResource('v1').addProxy();
+    this.addAllMethodProxy(chatResource, chatLambda, { responseTransferMode: ResponseTransferMode.STREAM });
   }
 
-  private addAllMethodProxy(resource: IResource, lambda: NodejsFunction, authenticated = true): void {
+  private addAllMethodProxy(resource: IResource, lambda: NodejsFunction, options: AddMethodProxyOptions = {}): void {
+    const { authType = 'cognito', responseTransferMode } = options;
+    const timeout = responseTransferMode === ResponseTransferMode.STREAM ? Duration.minutes(5) : undefined;
     ['GET', 'POST', 'PUT', 'DELETE'].forEach((method) => {
       resource.addMethod(
         method,
         new LambdaIntegration(lambda, {
           proxy: true,
           allowTestInvoke: true,
+          responseTransferMode,
+          timeout,
         }),
         {
-          authorizer: authenticated ? this.authorizer : undefined,
+          authorizer: authType === 'cognito' ? this.authorizer : undefined,
+          authorizationType: authType === 'iam' ? AuthorizationType.IAM : undefined,
         },
       );
     });
