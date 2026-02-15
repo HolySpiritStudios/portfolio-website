@@ -1,5 +1,5 @@
 import { OrbitControls, Sphere } from '@react-three/drei';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -7,32 +7,55 @@ import * as THREE from 'three';
 interface FaceProps {
   isSpeaking: boolean;
   mouthOpenAmount: number;
+  mousePosition: { x: number; y: number };
 }
 
-function Face({ isSpeaking, mouthOpenAmount }: FaceProps) {
+function Face({ isSpeaking, mouthOpenAmount, mousePosition }: FaceProps) {
   const headRef = useRef<THREE.Mesh>(null);
   const leftEyeRef = useRef<THREE.Mesh>(null);
   const rightEyeRef = useRef<THREE.Mesh>(null);
   const mouthRef = useRef<THREE.Mesh>(null);
 
-  // Subtle head movement animation
+  const { viewport } = useThree();
+
   useFrame((state) => {
+    // Very subtle idle head movement
     if (headRef.current) {
-      headRef.current.rotation.y = Math.sin(state.clock.elapsedTime * 0.5) * 0.1;
-      headRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.3) * 0.05;
+      const idleX = Math.sin(state.clock.elapsedTime * 0.3) * 0.02;
+      const idleY = Math.sin(state.clock.elapsedTime * 0.5) * 0.01;
+
+      // Track mouse with constraints
+      const targetX = (mousePosition.x / viewport.width) * 0.15;
+      const targetY = -(mousePosition.y / viewport.height) * 0.1;
+
+      headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, targetX + idleX, 0.05);
+      headRef.current.rotation.x = THREE.MathUtils.lerp(headRef.current.rotation.x, targetY + idleY, 0.05);
     }
 
-    // Blinking animation
+    // Eye tracking - more responsive than head
     if (leftEyeRef.current && rightEyeRef.current) {
+      // Blinking animation
       const blink = Math.sin(state.clock.elapsedTime * 3) < -0.95 ? 0.1 : 1;
       leftEyeRef.current.scale.y = blink;
       rightEyeRef.current.scale.y = blink;
+
+      // Eye position tracking
+      const eyeTargetX = (mousePosition.x / viewport.width) * 0.08;
+      const eyeTargetY = -(mousePosition.y / viewport.height) * 0.08;
+
+      leftEyeRef.current.position.x = THREE.MathUtils.lerp(leftEyeRef.current.position.x, -0.3 + eyeTargetX, 0.1);
+      leftEyeRef.current.position.y = THREE.MathUtils.lerp(leftEyeRef.current.position.y, 0.2 + eyeTargetY, 0.1);
+
+      rightEyeRef.current.position.x = THREE.MathUtils.lerp(rightEyeRef.current.position.x, 0.3 + eyeTargetX, 0.1);
+      rightEyeRef.current.position.y = THREE.MathUtils.lerp(rightEyeRef.current.position.y, 0.2 + eyeTargetY, 0.1);
     }
 
     // Mouth animation when speaking
     if (mouthRef.current && isSpeaking) {
       const wiggle = Math.sin(state.clock.elapsedTime * 15) * 0.3 + 0.7;
       mouthRef.current.scale.y = 0.5 + mouthOpenAmount * 0.8 * wiggle;
+    } else if (mouthRef.current) {
+      mouthRef.current.scale.y = THREE.MathUtils.lerp(mouthRef.current.scale.y, 0.5, 0.1);
     }
   });
 
@@ -75,10 +98,24 @@ export const AIFace = () => {
   const [transcript, setTranscript] = useState('');
   const [response, setResponse] = useState('');
   const [mouthOpenAmount, setMouthOpenAmount] = useState(0);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesisUtterance | null>(null);
+
+  // Track mouse movement
+  useEffect(() => {
+    const handleMouseMove = (event: MouseEvent) => {
+      setMousePosition({
+        x: (event.clientX - window.innerWidth / 2) / 100,
+        y: (event.clientY - window.innerHeight / 2) / 100,
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const getAIResponse = useCallback(async (_userMessage: string) => {
     try {
@@ -185,7 +222,7 @@ export const AIFace = () => {
           <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />
           <pointLight position={[-10, -10, -10]} intensity={0.5} />
           {/* eslint-enable react/no-unknown-property */}
-          <Face isSpeaking={isSpeaking} mouthOpenAmount={mouthOpenAmount} />
+          <Face isSpeaking={isSpeaking} mouthOpenAmount={mouthOpenAmount} mousePosition={mousePosition} />
           <OrbitControls enableZoom={false} enablePan={false} makeDefault />
         </Canvas>
       </div>
