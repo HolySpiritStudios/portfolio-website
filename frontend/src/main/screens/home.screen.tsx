@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 import { CommonButton } from '../../common/components/common-button';
 import { ThemeSwitcher } from '../../common/components/theme-switcher.component';
 import { selectCurrentUser } from '../../user-management/selectors/user-authentication-status.selector';
-import { AIFace } from '../components/ai-face.component';
+import { MatrixFace } from '../components/matrix-face.component';
 import { PathEnum } from '../constants/path.constant';
 import { useAppSelector } from '../hooks/use-app-selector';
 
@@ -42,8 +42,8 @@ export const HomeScreen = () => {
         </div>
       </div>
 
-      {/* AI Face - Full Screen */}
-      <AIFace />
+      {/* Matrix AI Face - Full Screen */}
+      <MatrixFace />
     </div>
   );
 };
