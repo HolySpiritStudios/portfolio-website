@@ -179,14 +179,14 @@ export const AIFace = () => {
     <div className="w-full h-screen flex flex-col">
       {/* 3D Canvas */}
       <div className="flex-1 bg-gradient-to-b from-slate-900 to-slate-800">
-        <Canvas camera={{ position: [0, 0, 3], fov: 50 }}>
+        <Canvas camera={{ position: [0, 0, 3], fov: 50 }} gl={{ antialias: true, alpha: false }} dpr={[1, 2]}>
           {/* eslint-disable react/no-unknown-property */}
           <ambientLight intensity={0.5} />
           <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />
           <pointLight position={[-10, -10, -10]} intensity={0.5} />
           {/* eslint-enable react/no-unknown-property */}
           <Face isSpeaking={isSpeaking} mouthOpenAmount={mouthOpenAmount} />
-          <OrbitControls enableZoom={false} enablePan={false} />
+          <OrbitControls enableZoom={false} enablePan={false} makeDefault />
         </Canvas>
       </div>
 
