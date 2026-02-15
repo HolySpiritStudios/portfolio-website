@@ -4,7 +4,6 @@ import { RouterProvider, createBrowserRouter } from 'react-router';
 import { ChatRouter } from '../../chat/routers/chat.router';
 import { CommonSuspense } from '../../common/components/common-suspense';
 import { CommonSuspenseFallback } from '../../common/components/common-suspense-fallback';
-import { UserAuthenticatedScreenProtector } from '../../common/components/screen-protectors/user-authenticated-screen-protector';
 import { UserManagementRouter } from '../../user-management/routers/user-management.router';
 import { AnalyticsEventEnum } from '../constants/analytics-event.constant';
 import { PathEnum } from '../constants/path.constant';
@@ -22,9 +21,7 @@ const browserRouter = createBrowserRouter([
     path: PathEnum.HOME,
     element: (
       <CommonSuspense suspenseKey={PathEnum.HOME}>
-        <UserAuthenticatedScreenProtector>
-          <HomeScreenLazy />
-        </UserAuthenticatedScreenProtector>
+        <HomeScreenLazy />
       </CommonSuspense>
     ),
   },
