@@ -26,7 +26,7 @@ function Face({ isSpeaking, mouthOpenAmount, mousePosition }: FaceProps) {
 
       // Track mouse with constraints
       const targetX = (mousePosition.x / viewport.width) * 0.15;
-      const targetY = -(mousePosition.y / viewport.height) * 0.1;
+      const targetY = (mousePosition.y / viewport.height) * 0.1; // Fixed: removed negative
 
       headRef.current.rotation.y = THREE.MathUtils.lerp(headRef.current.rotation.y, targetX + idleX, 0.05);
       headRef.current.rotation.x = THREE.MathUtils.lerp(headRef.current.rotation.x, targetY + idleY, 0.05);
@@ -39,15 +39,18 @@ function Face({ isSpeaking, mouthOpenAmount, mousePosition }: FaceProps) {
       leftEyeRef.current.scale.y = blink;
       rightEyeRef.current.scale.y = blink;
 
-      // Eye position tracking
-      const eyeTargetX = (mousePosition.x / viewport.width) * 0.08;
-      const eyeTargetY = -(mousePosition.y / viewport.height) * 0.08;
+      // Eye position tracking - reduced range to prevent clipping
+      const eyeTargetX = (mousePosition.x / viewport.width) * 0.05; // Reduced from 0.08
+      const eyeTargetY = (mousePosition.y / viewport.height) * 0.05; // Fixed: removed negative, reduced range
 
+      // Keep eyes constrained and in front of head
       leftEyeRef.current.position.x = THREE.MathUtils.lerp(leftEyeRef.current.position.x, -0.3 + eyeTargetX, 0.1);
       leftEyeRef.current.position.y = THREE.MathUtils.lerp(leftEyeRef.current.position.y, 0.2 + eyeTargetY, 0.1);
+      leftEyeRef.current.position.z = 0.8; // Keep in front
 
       rightEyeRef.current.position.x = THREE.MathUtils.lerp(rightEyeRef.current.position.x, 0.3 + eyeTargetX, 0.1);
       rightEyeRef.current.position.y = THREE.MathUtils.lerp(rightEyeRef.current.position.y, 0.2 + eyeTargetY, 0.1);
+      rightEyeRef.current.position.z = 0.8; // Keep in front
     }
 
     // Mouth animation when speaking
