@@ -2,7 +2,7 @@
  * Application name constants
  */
 
-export const APP_NAME = 'ws-mono-st';
+export const APP_NAME = 'portfolio';
 export const OWNER_EMAIL = 'serban.petrescu@trilogy.com';
 
 /**

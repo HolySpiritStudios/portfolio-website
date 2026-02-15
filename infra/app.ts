@@ -16,13 +16,13 @@ if (inputEnv === 'integration') {
   new InfraStack(app, 'IntegrationStack', {
     stackName: getResourceName('integration', 'stack'),
     environment: 'integration',
-    secretId: 'ws-mono-st/backend/integration/secrets',
+    secretId: 'portfolio/backend/integration/secrets',
     domainName: 'wseng.rp.devfactory.com',
     subdomainName: 'monorepo-integration',
     certificateArn: 'arn:aws:acm:us-east-1:856284715153:certificate/2c7230dd-9ebd-4eb8-be80-c6d9d97770d1',
     sentryDsn: process.env.SENTRY_DSN,
     ltiIssuer: 'https://staging.timeback.com',
-    ltiAudience: 'ws-mono-st',
+    ltiAudience: 'portfolio',
     timeBackBaseUrl: 'https://platform.dev.timeback.com',
     env: { account: '856284715153', region: 'us-east-1' },
   });
@@ -31,13 +31,13 @@ if (inputEnv === 'integration') {
   new InfraStack(app, 'EphemeralStack', {
     stackName: getResourceName(environmentName, 'stack'),
     environment: environmentName,
-    secretId: 'ws-mono-st/backend/integration/secrets',
+    secretId: 'portfolio/backend/integration/secrets',
     domainName: 'wseng.rp.devfactory.com',
     subdomainName: `monorepo-` + environmentName,
     certificateArn: 'arn:aws:acm:us-east-1:856284715153:certificate/2c7230dd-9ebd-4eb8-be80-c6d9d97770d1',
     sentryDsn: process.env.SENTRY_DSN,
     ltiIssuer: 'https://staging.timeback.com',
-    ltiAudience: 'ws-mono-st',
+    ltiAudience: 'portfolio',
     timeBackBaseUrl: 'https://platform.dev.timeback.com',
     env: { account: '856284715153', region: 'us-east-1' },
   });
@@ -45,13 +45,13 @@ if (inputEnv === 'integration') {
   new InfraStack(app, 'ProductionStack', {
     stackName: getResourceName('production', 'stack'),
     environment: 'production',
-    secretId: 'ws-mono-st/backend/production/secrets',
+    secretId: 'portfolio/backend/production/secrets',
     domainName: 'wseng.rp.devfactory.com',
     subdomainName: 'monorepo',
     certificateArn: 'arn:aws:acm:us-east-1:856284715153:certificate/2c7230dd-9ebd-4eb8-be80-c6d9d97770d1',
     sentryDsn: process.env.SENTRY_DSN,
     ltiIssuer: 'https://timeback.com',
-    ltiAudience: 'ws-mono-st',
+    ltiAudience: 'portfolio',
     timeBackBaseUrl: 'https://platform.timeback.com',
     env: { account: '856284715153', region: 'us-east-1' },
   });

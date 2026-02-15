@@ -4,8 +4,8 @@ type ConfigType = 'environment';
 
 const getBucketName = (environmentName: string): string => {
   return environmentName === (EnvironmentEnum.PRODUCTION as string)
-    ? 'ws-mono-st-production-assets'
-    : 'ws-mono-st-integration-assets';
+    ? 'portfolio-production-assets'
+    : 'portfolio-integration-assets';
 };
 
 export const mapConfigUrl = (environmentName: string, configType: ConfigType): string => {

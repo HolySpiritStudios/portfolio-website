@@ -26,9 +26,9 @@ export class RoutesService {
     return {
       openapi: openapiVersion,
       info: {
-        title: `WS.Eng Monorepo Starter API`,
+        title: `Portfolio Website API`,
         version: '1.0.0',
-        description: 'This API provides functionality for the WS.Eng Monorepo Starter.',
+        description: 'This API provides functionality for the Portfolio Website.',
       },
       tags: [
         { name: 'Authentication', description: 'User authentication and authorization endpoints' },

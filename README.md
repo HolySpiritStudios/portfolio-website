@@ -1,4 +1,4 @@
-# WS.Eng Monorepo Starter
+# Portfolio Website
 
 ## Setup
 
@@ -6,9 +6,9 @@
 
 1. Clone the repository
 2. Find and replace the following strings:
-   - `ws-mono-st` with a short, unique name for your project (all lowercase, dash-separated, max 12 characters)
-   - `wseng-monorepo-starter` with a longer, unique name for your project (all lowercase, dash-separated)
-   - `WS.Eng Monorepo Starter` with the name of your project
+   - `portfolio` with a short, unique name for your project (all lowercase, dash-separated, max 12 characters)
+   - `portfolio-website` with a longer, unique name for your project (all lowercase, dash-separated)
+   - `Portfolio Website` with the name of your project
 3. Run `pnpm i` in the root directory
 4. Adjust the AWS account IDs in the README.md file to your own AWS account IDs
 5. Adjust the infra/app.ts file with:
@@ -303,7 +303,7 @@ Once you're done with all the setup steps above (placeholders, secrets, visual i
 ## Project Structure
 
 ```
-wseng-monorepo-starter/
+portfolio-website/
 ├── backend/          # TypeScript/Node.js API server
 │   ├── app/          # Core application modules (auth, chat, hello-world)
 │   ├── entrypoints/  # AWS Lambda handlers & DI containers

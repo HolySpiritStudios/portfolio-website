@@ -1,5 +1,5 @@
 {
-  "name": "ws-mono-st-backend",
+  "name": "portfolio-backend",
   "private": true,
   "engines": {
     "node": ">=22"

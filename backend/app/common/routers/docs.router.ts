@@ -26,7 +26,7 @@ export class DocsRouter {
       '/docs/viewer',
       Scalar({
         url: 'openapi.json',
-        pageTitle: 'WS.Eng Monorepo Starter API',
+        pageTitle: 'Portfolio Website API',
         authentication: {
           preferredSecurityScheme: 'cognito',
           securitySchemes: {
